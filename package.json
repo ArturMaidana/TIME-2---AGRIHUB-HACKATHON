@@ -1,0 +1,23 @@
+{
+  "name": "agrihub-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "test": "node --test",
+    "check": "node --check server/index.js && node --check server/database.js && node --check src/domain/idt.js && node --check src/domain/alertas.js"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
