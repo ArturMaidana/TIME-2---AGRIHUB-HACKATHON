@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node server/index.js",
-    "test": "node --test",
+    "test": "node --test --test-concurrency=1",
     "check": "find server src -type f -name '*.js' -exec node --check {} \\;"
   },
   "dependencies": {

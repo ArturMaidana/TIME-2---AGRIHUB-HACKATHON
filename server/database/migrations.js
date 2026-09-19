@@ -13,12 +13,15 @@ export function runMigrations(db) {
   }
   if (!db.prepare("SELECT id FROM units WHERE id = 'u1'").get()) return;
   for (const [id, name, category] of STANDARD_SECTORS) {
-    db.prepare(`
-      INSERT INTO sectors(id, unit_id, name, category)
-      VALUES(?, 'u1', ?, ?)
-      ON CONFLICT(id) DO UPDATE SET name = excluded.name, category = excluded.category
-    `).run(id, name, category);
-    db.prepare('INSERT OR IGNORE INTO user_sectors VALUES(?, ?)').run('sup1', id);
+    const current = db.prepare('SELECT name, category FROM sectors WHERE id = ?').get(id);
+    if (!current) {
+      db.prepare("INSERT INTO sectors(id, unit_id, name, category) VALUES(?, 'u1', ?, ?)").run(id, name, category);
+    } else if (current.name !== name || current.category !== category) {
+      db.prepare('UPDATE sectors SET name = ?, category = ? WHERE id = ?').run(name, category, id);
+    }
+    if (!db.prepare('SELECT 1 FROM user_sectors WHERE user_id = ? AND sector_id = ?').get('sup1', id)) {
+      db.prepare('INSERT INTO user_sectors VALUES(?, ?)').run('sup1', id);
+    }
   }
 }
 
