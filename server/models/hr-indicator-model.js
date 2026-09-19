@@ -17,10 +17,11 @@ export const HrIndicatorModel = {
 
   create({ unitId, sectorId, shiftId, period, absences, leaves }) {
     db.prepare(`
-      INSERT INTO hr_indicators VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO hr_indicators(id, unit_id, sector_id, shift_id, period, absences, leaves, created_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       randomUUID(), unitId, sectorId, shiftId, period,
-      0, Number(absences), Number(leaves), '', new Date().toISOString(),
+      Number(absences), Number(leaves), new Date().toISOString(),
     );
   },
 };

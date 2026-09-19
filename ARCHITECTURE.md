@@ -59,4 +59,12 @@ servidor e impede que o perfil Totem acesse o dashboard ou os dados do RH.
 
 As variáveis aceitas estão documentadas em `.env.example`. Valores ausentes usam
 padrões seguros para a demonstração local. O banco é inicializado em três etapas:
+
+- criação do schema relacional, com chaves estrangeiras e restrições de domínio;
+- registro da versão em `schema_migrations`;
+- carga idempotente de dados demonstrativos para todos os setores e turnos.
+
+Os comandos `npm run db:status` e `npm run db:rebuild` permitem inspecionar ou
+recriar a base local; antes da recriação, o arquivo anterior é preservado como
+`data/agrihub.db.backup`.
 schema, migrações idempotentes e dados demonstrativos.

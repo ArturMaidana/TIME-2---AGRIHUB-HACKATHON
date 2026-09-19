@@ -8,11 +8,16 @@ import { seedDatabase } from '../database/seed.js';
 import { appConfig } from './app-config.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const file = appConfig.databasePath || resolve(root, 'data/agrihub.db');
-mkdirSync(dirname(file), { recursive: true });
+export const databaseFile = appConfig.databasePath || resolve(root, 'data/agrihub.db');
 
-export const db = new DatabaseSync(file);
-db.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
-createSchema(db);
-runMigrations(db);
-seedDatabase(db);
+export function openDatabase(file = databaseFile) {
+  mkdirSync(dirname(file), { recursive: true });
+  const connection = new DatabaseSync(file);
+  connection.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
+  createSchema(connection);
+  runMigrations(connection);
+  seedDatabase(connection);
+  return connection;
+}
+
+export const db = openDatabase();

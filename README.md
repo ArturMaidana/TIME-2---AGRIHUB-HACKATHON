@@ -17,7 +17,7 @@ O repositório contém um MVP demonstrável com:
 - dashboard do supervisor com filtros e histórico;
 - setores e turnos padronizados e pré-cadastrados;
 - telas de indicadores por setor e análise mensal integrada;
-- portal do RH para horas extras, faltas e afastamentos agregados;
+- portal exclusivo do RH para faltas e afastamentos agregados;
 - análise semanal e mensal simulada por IA;
 - backend Node.js com persistência SQLite.
 
@@ -38,6 +38,20 @@ Abra `http://localhost:3001` e use uma das credenciais:
 - Totem: `TOTEM-01`
 
 A saúde do backend pode ser verificada em `http://localhost:3001/api/health`.
+
+## Banco de dados
+
+O MVP usa um banco SQLite relacional e persistente em `data/agrihub.db`, com chaves
+estrangeiras e validações de domínio. Na primeira execução, ele recebe dados
+demonstrativos dos 10 setores, três turnos, 35 dias de respostas e cinco semanas de
+indicadores do RH.
+
+```bash
+npm run db:status   # exibe o arquivo utilizado e a quantidade de registros
+npm run db:rebuild  # cria backup, recria a estrutura e reaplica os dados fake
+```
+
+Para usar outro arquivo, defina `DATABASE_PATH` conforme o `.env.example`.
 
 Durante o desenvolvimento do frontend:
 

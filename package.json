@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node server/index.js",
+    "db:status": "node server/database/status.js",
+    "db:rebuild": "node server/database/rebuild.js",
     "test": "node --test --test-concurrency=1",
     "check": "find server src -type f -name '*.js' -exec node --check {} \\;"
   },

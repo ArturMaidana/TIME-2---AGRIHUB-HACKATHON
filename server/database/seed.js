@@ -7,7 +7,7 @@ const SHIFTS = [
 ];
 
 function seedResponses(db, sectorStart = 0) {
-  const insert = db.prepare('INSERT OR IGNORE INTO responses VALUES(?, ?, ?, ?, ?, ?, ?, ?)');
+  const insert = db.prepare('INSERT OR IGNORE INTO responses(id, unit_id, sector_id, shift_id, response_date, metric, score, quantity) VALUES(?, ?, ?, ?, ?, ?, ?, ?)');
   const today = new Date();
   for (let day = 34; day >= 0; day -= 1) {
     const date = new Date(today);
@@ -38,12 +38,12 @@ export function seedDatabase(db) {
     for (const shift of SHIFTS) db.prepare('INSERT INTO shifts VALUES(?, ?, ?, ?, ?)').run(shift[0], 'u1', shift[1], shift[2], shift[3]);
     db.prepare('INSERT INTO totens VALUES(?, ?, ?, ?, 1)').run('tot1', 'u1', 'Entrada principal', 'TOTEM-01');
     seedResponses(db);
-    const insertHr = db.prepare('INSERT INTO hr_indicators VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const insertHr = db.prepare('INSERT INTO hr_indicators(id, unit_id, sector_id, shift_id, period, absences, leaves, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)');
     const today = new Date();
     for (let week = 4; week >= 0; week -= 1) {
       const date = new Date(today); date.setDate(today.getDate() - week * 7);
       for (let index = 0; index < STANDARD_SECTORS.length; index += 1) {
-        insertHr.run(randomUUID(), 'u1', STANDARD_SECTORS[index][0], 't1', date.toISOString().slice(0, 10), 0, 2 + index, index % 3, '', new Date().toISOString());
+        insertHr.run(randomUUID(), 'u1', STANDARD_SECTORS[index][0], 't1', date.toISOString().slice(0, 10), 2 + index, index % 3, new Date().toISOString());
       }
     }
   } else if (db.prepare("SELECT COUNT(*) total FROM responses WHERE sector_id = 's5'").get().total === 0) {
