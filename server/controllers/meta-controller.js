@@ -2,9 +2,10 @@ import { SectorModel } from '../models/sector-model.js';
 import { ShiftModel } from '../models/shift-model.js';
 import { json } from '../utils/http.js';
 
-export function getMeta(_request, response, { session }) {
-  json(response, 200, {
-    sectors: SectorModel.listByUnit(session.unitId),
-    shifts: ShiftModel.listByUnit(session.unitId),
-  });
+export async function getMeta(_request, response, { session }) {
+  const [sectors, shifts] = await Promise.all([
+    SectorModel.listByUnit(session.unitId),
+    ShiftModel.listByUnit(session.unitId),
+  ]);
+  json(response, 200, { sectors, shifts });
 }

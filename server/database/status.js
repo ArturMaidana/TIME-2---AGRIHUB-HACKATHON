@@ -1,10 +1,15 @@
-import { db, databaseFile } from '../config/database.js';
+import { pool } from '../config/database.js';
+import { appConfig } from '../config/app-config.js';
 
-const tables = ['units', 'users', 'sectors', 'shifts', 'totens', 'responses', 'hr_indicators'];
-const counts = Object.fromEntries(tables.map((table) => [
-  table,
-  db.prepare(`SELECT COUNT(*) AS total FROM ${table}`).get().total,
-]));
+const TABLES = ['units', 'users', 'sectors', 'shifts', 'totens', 'responses', 'hr_indicators'];
 
-console.log(JSON.stringify({ database: databaseFile, persistent: databaseFile !== ':memory:', counts }, null, 2));
-db.close();
+async function main() {
+  const counts = {};
+  for (const table of TABLES) {
+    counts[table] = (await pool.query(`SELECT COUNT(*)::int AS total FROM ${table}`)).rows[0].total;
+  }
+  console.log(JSON.stringify({ database: appConfig.databaseUrl, counts }, null, 2));
+  await pool.end();
+}
+
+main();

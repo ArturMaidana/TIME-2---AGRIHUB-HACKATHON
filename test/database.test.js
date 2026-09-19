@@ -1,26 +1,32 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import { createSchema } from '../server/database/schema.js';
+import { pool } from '../server/config/database.js';
 
-function database() {
-  const db = new DatabaseSync(':memory:');
-  db.exec('PRAGMA foreign_keys = ON');
-  createSchema(db);
-  db.prepare('INSERT INTO units VALUES(?, ?, ?)').run('u1', 'Unidade teste', 'America/Cuiaba');
-  return db;
+async function withRollback(run) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await run(client);
+  } finally {
+    await client.query('ROLLBACK').catch(() => {});
+    client.release();
+  }
 }
 
-test('banco rejeita setor sem unidade relacionada', () => {
-  const db = database();
-  assert.throws(() => db.prepare('INSERT INTO sectors(id, unit_id, name, category) VALUES(?, ?, ?, ?)')
-    .run('s1', 'inexistente', 'Setor', 'FRIA'));
-  db.close();
+test('banco rejeita setor sem unidade relacionada', async () => {
+  await withRollback(async (client) => {
+    await assert.rejects(() => client.query(
+      'INSERT INTO sectors(id, unit_id, name, category) VALUES($1, $2, $3, $4)',
+      ['s-teste-fk', 'unidade-inexistente', 'Setor teste', 'FRIA'],
+    ));
+  });
 });
 
-test('banco valida categoria e notas da pesquisa', () => {
-  const db = database();
-  assert.throws(() => db.prepare('INSERT INTO sectors(id, unit_id, name, category) VALUES(?, ?, ?, ?)')
-    .run('s1', 'u1', 'Setor', 'INVALIDA'));
-  db.close();
+test('banco valida categoria do setor', async () => {
+  await withRollback(async (client) => {
+    await assert.rejects(() => client.query(
+      'INSERT INTO sectors(id, unit_id, name, category) VALUES($1, $2, $3, $4)',
+      ['s-teste-categoria', 'u1', 'Setor teste', 'INVALIDA'],
+    ));
+  });
 });

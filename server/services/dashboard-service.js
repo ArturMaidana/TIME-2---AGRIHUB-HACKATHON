@@ -1,26 +1,34 @@
 import { HrIndicatorModel } from '../models/hr-indicator-model.js';
 import { ResponseModel } from '../models/response-model.js';
+import { AnaliseModel } from '../models/analise-model.js';
 
-const simulatedAnalysis = {
-  attention: 'MODERADA',
-  title: 'Sinais físicos pedem atenção nesta semana',
-  summary: 'A IA identificou aumento simultâneo de dor, cansaço e faltas no período. Os dados sugerem uma associação operacional que merece acompanhamento, sem indicar causalidade individual.',
-  actions: [
-    'Reforçar pausas e alternância das tarefas críticas',
-    'Realizar escuta coletiva no início do próximo turno',
-    'Acompanhar faltas e afastamentos na próxima semana',
-  ],
-  monthly: 'No consolidado mensal, a energia permaneceu estável, mas o indicador físico caiu 8%. O aumento de faltas no mesmo período reforça a necessidade de acompanhamento preventivo.',
-};
+function fallbackAnalysis() {
+  return {
+    attention: 'BAIXA',
+    title: 'Ainda sem análise semanal gerada para este setor',
+    summary: 'Assim que houver amostra suficiente, a análise semanal aparecerá aqui.',
+    actions: [],
+    monthly: 'Análise mensal ainda não gerada para este setor.',
+  };
+}
 
 export const DashboardService = {
-  get({ unitId, sectorId, days = 30 }) {
-    return {
-      series: ResponseModel.getSeries({ unitId, sectorId, days }),
-      latest: ResponseModel.getTodayBySector(unitId),
-      sectorSummary: ResponseModel.getMonthlyBySector(unitId),
-      hr: HrIndicatorModel.listRecent({ unitId, sectorId }),
-      analysis: simulatedAnalysis,
-    };
+  async get({ unitId, sectorId, days = 30 }) {
+    const [series, latest, sectorSummary, hr, analisesSemanal] = await Promise.all([
+      ResponseModel.getSeries({ unitId, sectorId, days }),
+      ResponseModel.getTodayBySector(unitId),
+      ResponseModel.getMonthlyBySector(unitId),
+      HrIndicatorModel.listRecent({ unitId, sectorId }),
+      AnaliseModel.listByUnit({ unidadeId: unitId, periodicidade: 'SEMANAL', setorIds: sectorId && sectorId !== 'all' ? [sectorId] : null }),
+    ]);
+    const maisRecente = analisesSemanal[0];
+    const analysis = maisRecente ? {
+      attention: maisRecente.nivel_atencao,
+      title: `Análise de ${maisRecente.setor_nome} (${maisRecente.turno_nome})`,
+      summary: maisRecente.resumo,
+      actions: maisRecente.evidencias,
+      monthly: maisRecente.resumo,
+    } : fallbackAnalysis();
+    return { series, latest, sectorSummary, hr, analysis };
   },
 };

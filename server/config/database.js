@@ -1,23 +1,39 @@
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createSchema } from '../database/schema.js';
-import { runMigrations } from '../database/migrations.js';
-import { seedDatabase } from '../database/seed.js';
+import pg from 'pg';
 import { appConfig } from './app-config.js';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-export const databaseFile = appConfig.databasePath || resolve(root, 'data/agrihub.db');
+const { Pool } = pg;
 
-export function openDatabase(file = databaseFile) {
-  mkdirSync(dirname(file), { recursive: true });
-  const connection = new DatabaseSync(file);
-  connection.exec('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
-  createSchema(connection);
-  runMigrations(connection);
-  seedDatabase(connection);
-  return connection;
+export const pool = new Pool({
+  connectionString: appConfig.databaseUrl,
+  ssl: appConfig.databaseSsl ? { rejectUnauthorized: false } : false,
+});
+
+export async function queryAll(text, params = []) {
+  const result = await pool.query(text, params);
+  return result.rows;
 }
 
-export const db = openDatabase();
+export async function queryOne(text, params = []) {
+  const rows = await queryAll(text, params);
+  return rows[0] ?? null;
+}
+
+export async function execute(text, params = []) {
+  const result = await pool.query(text, params);
+  return result.rowCount;
+}
+
+export async function withTransaction(callback) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}

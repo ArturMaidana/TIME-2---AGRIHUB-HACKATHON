@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS requisicoes_totem;
+DROP TABLE IF EXISTS log_auditoria;
+DROP TABLE IF EXISTS acoes_plano;
+DROP TABLE IF EXISTS planos_acao;
+DROP TABLE IF EXISTS analises_periodicas;
+DROP TABLE IF EXISTS alertas;
+DROP TABLE IF EXISTS indices_setor;
+DROP TABLE IF EXISTS efetivos_setor_turno;
+DROP TABLE IF EXISTS configuracoes_indicadores;
