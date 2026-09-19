@@ -37,6 +37,8 @@ Abra `http://localhost:3001` e use uma das credenciais:
 - RH: `RH2026`
 - Totem: `TOTEM-01`
 
+A saúde do backend pode ser verificada em `http://localhost:3001/api/health`.
+
 Durante o desenvolvimento do frontend:
 
 ```bash

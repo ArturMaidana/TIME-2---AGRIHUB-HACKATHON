@@ -39,3 +39,24 @@ web/src/
 
 Componentes não acessam o banco. Toda comunicação passa pelo cliente HTTP e pelos
 controladores do backend.
+
+## Endpoints do MVP
+
+| Método | Rota | Camada responsável |
+| --- | --- | --- |
+| `GET` | `/api/health` | HealthController |
+| `POST` | `/api/auth` | AuthController → AuthService |
+| `GET` | `/api/totem` | TotemController → TotemService |
+| `POST` | `/api/totem/responses` | TotemController → TotemService |
+| `GET` | `/api/meta` | MetaController → Models |
+| `GET` | `/api/dashboard` | DashboardController → DashboardService |
+| `POST` | `/api/hr` | HrController → HrService |
+
+As rotas protegidas passam pelo middleware `authorize`, que resolve a sessão no
+servidor e impede que o perfil Totem acesse o dashboard ou os dados do RH.
+
+## Configuração
+
+As variáveis aceitas estão documentadas em `.env.example`. Valores ausentes usam
+padrões seguros para a demonstração local. O banco é inicializado em três etapas:
+schema, migrações idempotentes e dados demonstrativos.
