@@ -14,4 +14,8 @@ export const ShiftModel = {
       FROM shifts WHERE unit_id = ?
     `).all(unitId);
   },
+
+  findInUnit(id, unitId) {
+    return db.prepare('SELECT id FROM shifts WHERE id = ? AND unit_id = ?').get(id, unitId);
+  },
 };
