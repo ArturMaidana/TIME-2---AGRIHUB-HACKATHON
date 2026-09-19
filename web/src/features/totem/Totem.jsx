@@ -23,7 +23,8 @@ export function Totem({ auth, onLogout }) {
     setAnswers(next);
     if (step < 2) return setStep(step + 1);
     await api('/api/totem/responses', {
-      method: 'POST', body: JSON.stringify({ sectorId: sector.id, answers: next }),
+      method: 'POST',
+      body: JSON.stringify({ sectorId: sector.id, answers: next, idempotencyKey: crypto.randomUUID() }),
     }, auth.token);
     setSent(true);
     setTimeout(() => { setSector(); setStep(0); setAnswers({}); setSent(false); }, 2200);
