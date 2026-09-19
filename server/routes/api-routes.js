@@ -1,12 +1,14 @@
 import { login } from '../controllers/auth-controller.js';
 import { getDashboard } from '../controllers/dashboard-controller.js';
 import { createIndicator } from '../controllers/hr-controller.js';
+import { getHealth } from '../controllers/health-controller.js';
 import { getMeta } from '../controllers/meta-controller.js';
 import { getContext, recordResponses } from '../controllers/totem-controller.js';
 import { authorize } from '../middleware/authorize.js';
 import { asyncController, json } from '../utils/http.js';
 
 const routes = new Map([
+  ['GET /api/health', getHealth],
   ['POST /api/auth', login],
   ['GET /api/totem', authorize(['TOTEM'], getContext)],
   ['POST /api/totem/responses', authorize(['TOTEM'], recordResponses)],
