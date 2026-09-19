@@ -7,6 +7,7 @@ frigoríficos, sempre de forma agregada por setor e turno e nunca por pessoa.
 
 - [`SPEC.md`](./SPEC.md): especificação refinada e plano incremental.
 - [`AGENT.md`](./AGENT.md): requisitos originais do desafio.
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md): organização MVC do backend e módulos React.
 
 ## MVP funcional
 

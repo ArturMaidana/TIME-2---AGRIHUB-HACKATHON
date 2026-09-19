@@ -1,32 +1,8 @@
 import { createServer } from 'node:http';
-import { readFile,stat } from 'node:fs/promises';
-import { extname,resolve,dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { randomBytes,randomUUID } from 'node:crypto';
-import { db,dateKey,currentShift } from './database.js';
-const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dist=resolve(root,'dist'),sessions=new Map(),port=Number(process.env.PORT||3001);
-const send=(res,status,data)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8'});res.end(JSON.stringify(data))};
-async function input(req){let raw='';for await(const c of req)raw+=c;return raw?JSON.parse(raw):{}}
-function session(req,roles){const t=req.headers.authorization?.replace(/^Bearer /,'');const s=sessions.get(t);return s&&roles.includes(s.role)?s:null}
-function login(payload){const token=randomBytes(24).toString('base64url');sessions.set(token,payload);return token}
-function dashboard(unitId,sectorId,days=30){
- const scoped=sectorId&&sectorId!=='all',scope=scoped?' AND r.sector_id=?':'',args=[unitId,`-${days-1} days`,...(scoped?[sectorId]:[])];
- const series=db.prepare(`SELECT response_date date,metric,ROUND(SUM(score*quantity)*1.0/SUM(quantity),2) average,SUM(quantity) responses FROM responses r WHERE unit_id=? AND response_date>=date('now',?)${scope} GROUP BY date,metric ORDER BY date`).all(...args);
- const latest=db.prepare(`SELECT s.id,s.name,r.metric,ROUND(SUM(r.score*r.quantity)*1.0/SUM(r.quantity),2) average,SUM(r.quantity) responses FROM sectors s LEFT JOIN responses r ON r.sector_id=s.id AND r.response_date=date('now') WHERE s.unit_id=? GROUP BY s.id,r.metric ORDER BY s.name`).all(unitId);
- const sectorSummary=db.prepare(`SELECT s.id,s.name,s.category,r.metric,ROUND(SUM(r.score*r.quantity)*1.0/SUM(r.quantity),2) average,SUM(r.quantity) responses FROM sectors s LEFT JOIN responses r ON r.sector_id=s.id AND r.response_date>=date('now','-29 days') WHERE s.unit_id=? GROUP BY s.id,s.name,s.category,r.metric ORDER BY s.category DESC,s.name`).all(unitId);
- const hr=db.prepare(`SELECT h.*,s.name sector,sh.name shift FROM hr_indicators h JOIN sectors s ON s.id=h.sector_id JOIN shifts sh ON sh.id=h.shift_id WHERE h.unit_id=?${scoped?' AND h.sector_id=?':''} ORDER BY period DESC LIMIT 20`).all(unitId,...(scoped?[sectorId]:[]));
- return {series,latest,sectorSummary,hr,analysis:{attention:'MODERADA',title:'Sinais físicos pedem atenção nesta semana',summary:'A IA identificou aumento simultâneo de dor, cansaço e faltas no período. Os dados sugerem uma associação operacional que merece acompanhamento, sem indicar causalidade individual.',actions:['Reforçar pausas e alternância das tarefas críticas','Realizar escuta coletiva no início do próximo turno','Acompanhar faltas e afastamentos na próxima semana'],monthly:'No consolidado mensal, a energia permaneceu estável, mas o indicador físico caiu 8%. O aumento de faltas no mesmo período reforça a necessidade de acompanhamento preventivo.'}};
-}
-async function api(req,res,url){
- if(req.method==='POST'&&url.pathname==='/api/auth'){const b=await input(req);if(b.type==='TOTEM'){const t=db.prepare('SELECT * FROM totens WHERE credential=? AND active=1').get(b.code);if(!t)return send(res,401,{error:'Identificador inválido'});return send(res,200,{token:login({role:'TOTEM',unitId:t.unit_id}),role:'TOTEM',name:t.name})}const u=db.prepare('SELECT * FROM users WHERE code=?').get(b.code);if(!u)return send(res,401,{error:'Código inválido'});return send(res,200,{token:login({role:u.role,unitId:u.unit_id,userId:u.id}),role:u.role,name:u.name})}
- const tot=session(req,['TOTEM']);
- if(req.method==='GET'&&url.pathname==='/api/totem'){if(!tot)return send(res,403,{error:'Acesso do totem necessário'});return send(res,200,{sectors:db.prepare('SELECT id,name,category FROM sectors WHERE unit_id=? AND active=1 ORDER BY category DESC,name').all(tot.unitId),shift:currentShift(tot.unitId),date:dateKey()})}
- if(req.method==='POST'&&url.pathname==='/api/totem/responses'){if(!tot)return send(res,403,{error:'Acesso do totem necessário'});const b=await input(req),shift=currentShift(tot.unitId);if(!b.sectorId||!b.answers||!['ENERGY','PHYSICAL','STRESS'].every(k=>Number.isInteger(b.answers[k])&&b.answers[k]>=1&&b.answers[k]<=5))return send(res,422,{error:'Responda as três perguntas'});const sector=db.prepare('SELECT id FROM sectors WHERE id=? AND unit_id=?').get(b.sectorId,tot.unitId);if(!sector)return send(res,422,{error:'Setor inválido'});const stmt=db.prepare(`INSERT INTO responses VALUES(?,?,?,?,?,?,?,1) ON CONFLICT(unit_id,sector_id,shift_id,response_date,metric,score) DO UPDATE SET quantity=quantity+1`);for(const [metric,score] of Object.entries(b.answers))stmt.run(randomUUID(),tot.unitId,b.sectorId,shift.id,dateKey(),metric,score);return send(res,201,{ok:true})}
- const user=session(req,['SUPERVISOR','RH']);if(!user)return send(res,401,{error:'Faça login novamente'});
- if(req.method==='GET'&&url.pathname==='/api/meta')return send(res,200,{sectors:db.prepare('SELECT id,name,category FROM sectors WHERE unit_id=? ORDER BY category DESC,name').all(user.unitId),shifts:db.prepare('SELECT id,name,start_time startTime,end_time endTime FROM shifts WHERE unit_id=? ORDER BY start_time').all(user.unitId)});
- if(req.method==='GET'&&url.pathname==='/api/dashboard')return send(res,200,dashboard(user.unitId,url.searchParams.get('sector'),Number(url.searchParams.get('days')||30)));
- if(req.method==='POST'&&url.pathname==='/api/hr'){if(user.role!=='RH')return send(res,403,{error:'Acesso exclusivo do RH'});const b=await input(req);db.prepare('INSERT INTO hr_indicators VALUES(?,?,?,?,?,?,?,?,?,?)').run(randomUUID(),user.unitId,b.sectorId,b.shiftId,b.period,0,Number(b.absences),Number(b.leaves),'',new Date().toISOString());return send(res,201,{ok:true})}
- return send(res,404,{error:'Rota não encontrada'});
-}
-async function files(res,url){let f=resolve(dist,`.${url.pathname==='/'?'/index.html':url.pathname}`);try{if(!(await stat(f)).isFile())f=resolve(dist,'index.html')}catch{f=resolve(dist,'index.html')}try{const d=await readFile(f),types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'};res.writeHead(200,{'content-type':types[extname(f)]||'application/octet-stream'});res.end(d)}catch{send(res,503,{error:'Execute npm run build'})}}
-createServer(async(req,res)=>{const url=new URL(req.url,`http://${req.headers.host}`);try{url.pathname.startsWith('/api/')?await api(req,res,url):await files(res,url)}catch(e){console.error(e);send(res,500,{error:'Não foi possível concluir'})}}).listen(port,()=>console.log(`AgriHub em http://localhost:${port}`));
+import { app } from './app.js';
+
+const port = Number(process.env.PORT || 3001);
+
+createServer(app).listen(port, () => {
+  console.log(`AgriHub em http://localhost:${port}`);
+});
