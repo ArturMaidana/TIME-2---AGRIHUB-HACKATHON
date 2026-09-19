@@ -2,12 +2,13 @@ import { dateKey } from '../utils/date.js';
 import { ResponseModel } from '../models/response-model.js';
 import { SectorModel } from '../models/sector-model.js';
 import { ShiftModel } from '../models/shift-model.js';
+import { appConfig } from '../config/app-config.js';
 
 const METRICS = ['ENERGY', 'PHYSICAL', 'STRESS'];
 
 function findCurrentShift(unitId, now = new Date()) {
   const time = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Cuiaba', hour: '2-digit', minute: '2-digit', hour12: false,
+    timeZone: appConfig.timezone, hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(now);
   const shifts = ShiftModel.listRawByUnit(unitId);
   return shifts.find((shift) => shift.start_time < shift.end_time

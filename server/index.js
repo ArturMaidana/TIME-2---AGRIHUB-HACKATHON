@@ -1,8 +1,7 @@
 import { createServer } from 'node:http';
 import { app } from './app.js';
+import { appConfig } from './config/app-config.js';
 
-const port = Number(process.env.PORT || 3001);
-
-createServer(app).listen(port, () => {
-  console.log(`AgriHub em http://localhost:${port}`);
+createServer(app).listen(appConfig.port, () => {
+  console.log(`AgriHub em http://localhost:${appConfig.port}`);
 });
