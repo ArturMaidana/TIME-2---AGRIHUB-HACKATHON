@@ -5,27 +5,33 @@ frigoríficos, sempre de forma agregada por setor e turno e nunca por pessoa.
 
 ## Documentação
 
-- [`SPEC.md`](./SPEC.md): especificação refinada e plano incremental.
+- [`SPEC.md`](./SPEC.md): especificação refinada e plano incremental do MVP.
+- [`SPEC-ADICIONAL.md`](./SPEC-ADICIONAL.md): evolução analítica (índice de atenção,
+  alertas, motor de análise) e migração para PostgreSQL.
 - [`AGENT.md`](./AGENT.md): requisitos originais do desafio.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): organização MVC do backend e módulos React.
+- [`docs/superpowers/specs/`](./docs/superpowers/specs/): design docs aprovados.
+- [`docs/superpowers/plans/`](./docs/superpowers/plans/): planos de implementação.
 
 ## MVP funcional
 
 O repositório contém um MVP demonstrável com:
 
-- totem anônimo com três perguntas e turno automático;
-- dashboard do supervisor com filtros e histórico;
+- totem anônimo com três perguntas, turno automático e idempotência técnica;
+- dashboard do supervisor com filtros, histórico, índice de atenção e alertas ativos;
 - setores e turnos padronizados e pré-cadastrados;
-- telas de indicadores por setor e análise mensal integrada;
+- telas de indicadores por setor (ordenadas por nível de atenção) e análise mensal
+  integrada com plano de ação editável;
 - portal exclusivo do RH para faltas e afastamentos agregados;
-- análise semanal e mensal simulada por IA;
-- backend Node.js com persistência SQLite.
+- motor determinístico de análise semanal/mensal com evidências e correlações;
+- backend Node.js assíncrono com persistência PostgreSQL.
 
 ## Executar
 
-Requisito: Node.js 22 ou superior.
+Requisito: Node.js 22 ou superior e Docker (para o PostgreSQL local).
 
 ```bash
+npm run docker:db   # sobe o PostgreSQL local (docker-compose.yml)
 npm install
 npm run build
 npm start
@@ -41,17 +47,26 @@ A saúde do backend pode ser verificada em `http://localhost:3001/api/health`.
 
 ## Banco de dados
 
-O MVP usa um banco SQLite relacional e persistente em `data/agrihub.db`, com chaves
-estrangeiras e validações de domínio. Na primeira execução, ele recebe dados
-demonstrativos dos 10 setores, três turnos, 35 dias de respostas e cinco semanas de
-indicadores do RH.
+O MVP usa PostgreSQL, com chaves estrangeiras, restrições de domínio e migrations
+versionadas em `server/database/migrations/`. Na primeira execução, o banco recebe
+dados demonstrativos dos 10 setores, três turnos, 35 dias de respostas, cinco semanas
+de indicadores do RH, e configuração/headcount padrão para o motor de índice.
 
 ```bash
-npm run db:status   # exibe o arquivo utilizado e a quantidade de registros
-npm run db:rebuild  # cria backup, recria a estrutura e reaplica os dados fake
+npm run db:migrate  # aplica as migrations pendentes
+npm run db:status    # exibe a conexão utilizada e a quantidade de registros
+npm run db:rebuild   # trunca, recria a estrutura e reaplica os dados fake
 ```
 
-Para usar outro arquivo, defina `DATABASE_PATH` conforme o `.env.example`.
+A conexão é definida por `DATABASE_URL`/`DATABASE_SSL`, conforme o `.env.example`
+(padrão: Postgres local do `docker-compose.yml`, porta 5433 — deslocada de 5432 para
+não colidir com uma instância local já existente).
+
+Migração de uma base SQLite anterior (`data/agrihub.db`) para o Postgres:
+
+```bash
+node server/database/migrate-from-sqlite.js ./data/agrihub.db
+```
 
 Durante o desenvolvimento do frontend:
 
@@ -66,5 +81,7 @@ npm test
 npm run check
 ```
 
-Os testes existentes cobrem apenas a exploração inicial das regras de IDT e alertas;
-eles serão revisados quando as decisões do novo recorte forem fechadas.
+`npm test` roda `pretest` automaticamente (migra e popula o banco de desenvolvimento)
+antes da suíte. Os testes cobrem cálculos de índice/comparação/alertas/análise (puros,
+sem banco), migrations, concorrência e idempotência do totem, e autorização por
+unidade/setor.

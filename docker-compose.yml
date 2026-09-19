@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: agrihub
+      POSTGRES_PASSWORD: agrihub
+      POSTGRES_DB: agrihub
+    ports:
+      - "5433:5432"
+    volumes:
+      - agrihub-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agrihub"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  agrihub-pg-data:

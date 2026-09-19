@@ -1,11 +1,11 @@
-import { db } from '../config/database.js';
+import { queryOne } from '../config/database.js';
 
 export const AuthModel = {
   findUserByCode(code) {
-    return db.prepare('SELECT * FROM users WHERE code = ?').get(code);
+    return queryOne('SELECT * FROM users WHERE code = $1', [code]);
   },
 
   findActiveTotemByCredential(credential) {
-    return db.prepare('SELECT * FROM totens WHERE credential = ? AND active = 1').get(credential);
+    return queryOne('SELECT * FROM totens WHERE credential = $1 AND active = 1', [credential]);
   },
 };

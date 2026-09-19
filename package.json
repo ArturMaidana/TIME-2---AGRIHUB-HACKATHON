@@ -7,14 +7,18 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node server/index.js",
+    "docker:db": "docker compose up -d db",
+    "db:migrate": "node server/database/migrate.js",
     "db:status": "node server/database/status.js",
     "db:rebuild": "node server/database/rebuild.js",
+    "pretest": "node server/database/prepare.js",
     "test": "node --test --test-concurrency=1",
     "check": "find server src -type f -name '*.js' -exec node --check {} \\;"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
+    "pg": "^8.23.0",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"

@@ -16,8 +16,8 @@ test('aceita somente contagens inteiras não negativas', () => {
   assert.equal(isNonNegativeInteger(1.5), false);
 });
 
-test('rejeita indicador do RH fora do escopo da unidade', () => {
-  assert.deepEqual(HrService.create('u1', {
+test('rejeita indicador do RH fora do escopo da unidade', async () => {
+  assert.deepEqual(await HrService.create('u1', {
     sectorId: 'setor-inexistente', shiftId: 't1', period: '2026-09-19',
     absences: 1, leaves: 0,
   }), { ok: false, error: 'Setor inválido' });

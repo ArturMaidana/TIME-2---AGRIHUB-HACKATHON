@@ -6,7 +6,19 @@ import { buildSectorRows } from './sector-utils.js';
 
 export function MonthlyAnalysis({ auth }) {
   const [data, setData] = useState();
+  const [planos, setPlanos] = useState([]);
   useEffect(() => { api('/api/dashboard?days=30', {}, auth.token).then(setData); }, [auth.token]);
+  useEffect(() => {
+    api('/api/v1/supervisor/analises?periodicidade=mensal', {}, auth.token)
+      .then(() => api('/api/v1/supervisor/planos-acao', {}, auth.token))
+      .then((res) => setPlanos(res.planos));
+  }, [auth.token]);
+
+  async function atualizarStatus(planoId, status) {
+    await api(`/api/v1/supervisor/planos-acao/${planoId}`, { method: 'PATCH', body: JSON.stringify({ status }) }, auth.token);
+    setPlanos((current) => current.map((plano) => (plano.id === planoId ? { ...plano, status } : plano)));
+  }
+
   if (!data) return <div className="loading">Cruzando dados mensais…</div>;
   const ranked = buildSectorRows(data.sectorSummary).sort((a, b) => a.wellness - b.wellness);
   const hr = data.hr.reduce((total, item) => ({
@@ -22,5 +34,19 @@ export function MonthlyAnalysis({ auth }) {
         <div className="correlation"><span>1</span><div><strong>Sinal observado</strong><p>Dor e cansaço apresentaram piora no período.</p></div></div><div className="correlation"><span>2</span><div><strong>Dado relacionado</strong><p>Faltas aumentaram nos setores com menor índice.</p></div></div><div className="correlation"><span>3</span><div><strong>Ação sugerida</strong><p>Priorizar escuta e revisão de pausas em {focus?.name || 'setores críticos'}.</p></div></div><small>Associação estatística simulada. Não representa causalidade ou diagnóstico.</small>
       </article></section>
     <section className="card ranking"><header><div><span className="overline">PRIORIZAÇÃO</span><h2>Setores que exigem acompanhamento</h2></div></header><div>{ranked.slice(0, 5).map((row, index) => <article key={row.id}><span>{index + 1}</span><div><strong>{row.name}</strong><small>{row.category === 'QUENTE' ? 'Área Quente' : 'Área Fria'}</small></div><b>{row.wellness.toFixed(1)}/5</b><i><span style={{ width: `${row.wellness * 20}%` }} /></i></article>)}</div></section>
+    <section className="card"><header><div><span className="overline">PLANOS DE AÇÃO</span><h2>Sugeridos pela análise determinística</h2></div></header>
+      {planos.length === 0 && <p>Nenhum plano gerado ainda.</p>}
+      {planos.map((plano) => <div className="plan-item" key={plano.id}>
+        <div><strong>{plano.setor_nome} - {plano.turno_nome}</strong>
+          <ul>{plano.acoes.map((acao) => <li key={acao.id}>{acao.descricao}</li>)}</ul>
+        </div>
+        <select value={plano.status} onChange={(event) => atualizarStatus(plano.id, event.target.value)}>
+          <option value="PENDENTE">Pendente</option>
+          <option value="EM_ANDAMENTO">Em andamento</option>
+          <option value="CONCLUIDO">Concluído</option>
+          <option value="DESCARTADO">Descartado</option>
+        </select>
+      </div>)}
+    </section>
   </div>;
 }

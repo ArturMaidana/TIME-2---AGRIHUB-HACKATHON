@@ -1,20 +1,19 @@
-import { copyFileSync, existsSync, rmSync } from 'node:fs';
-import { db as currentDatabase, databaseFile, openDatabase } from '../config/database.js';
+import { pool } from '../config/database.js';
+import { runMigrations } from './migrate.js';
+import { seedDatabase } from './seed.js';
 
-if (databaseFile === ':memory:') throw new Error('Não é possível recriar um banco em memória.');
+const TABLES_IN_DEPENDENCY_ORDER = [
+  'hr_indicators', 'responses', 'totens', 'user_sectors', 'sectors', 'shifts', 'users', 'units',
+];
 
-currentDatabase.close();
-
-if (existsSync(databaseFile)) {
-  const backup = `${databaseFile}.backup`;
-  copyFileSync(databaseFile, backup);
-  rmSync(databaseFile);
-  for (const suffix of ['-shm', '-wal']) {
-    if (existsSync(`${databaseFile}${suffix}`)) rmSync(`${databaseFile}${suffix}`);
+async function main() {
+  for (const table of TABLES_IN_DEPENDENCY_ORDER) {
+    await pool.query(`TRUNCATE TABLE ${table} CASCADE`).catch(() => {});
   }
-  console.log(`Backup criado em ${backup}`);
+  await runMigrations();
+  await seedDatabase();
+  console.log('Banco recriado e populado no PostgreSQL.');
+  await pool.end();
 }
 
-const db = openDatabase(databaseFile);
-db.close();
-console.log(`Banco recriado e populado em ${databaseFile}`);
+main();

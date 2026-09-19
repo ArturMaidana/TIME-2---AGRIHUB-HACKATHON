@@ -4,6 +4,10 @@ import { createIndicator } from '../controllers/hr-controller.js';
 import { getHealth } from '../controllers/health-controller.js';
 import { getMeta } from '../controllers/meta-controller.js';
 import { getContext, recordResponses } from '../controllers/totem-controller.js';
+import {
+  getIndices, getComparativo, getParticipacao, getAlertas, patchAlerta,
+  getAnalises, getPlanosAcao, patchPlanoAcao,
+} from '../controllers/supervisor-controller.js';
 import { authorize } from '../middleware/authorize.js';
 import { asyncController, json } from '../utils/http.js';
 
@@ -15,9 +19,21 @@ const routes = new Map([
   ['GET /api/meta', authorize(['SUPERVISOR', 'RH'], getMeta)],
   ['GET /api/dashboard', authorize(['SUPERVISOR', 'RH'], getDashboard)],
   ['POST /api/hr', authorize(['RH'], createIndicator)],
+  ['GET /api/v1/supervisor/indices', authorize(['SUPERVISOR'], getIndices)],
+  ['GET /api/v1/supervisor/comparativo', authorize(['SUPERVISOR'], getComparativo)],
+  ['GET /api/v1/supervisor/participacao', authorize(['SUPERVISOR'], getParticipacao)],
+  ['GET /api/v1/supervisor/alertas', authorize(['SUPERVISOR'], getAlertas)],
+  ['GET /api/v1/supervisor/analises', authorize(['SUPERVISOR'], getAnalises)],
+  ['GET /api/v1/supervisor/planos-acao', authorize(['SUPERVISOR'], getPlanosAcao)],
 ]);
 
 export async function handleApi(request, response, url) {
+  if (request.method === 'PATCH' && url.pathname.startsWith('/api/v1/supervisor/alertas/')) {
+    return asyncController(authorize(['SUPERVISOR'], patchAlerta))(request, response, { url });
+  }
+  if (request.method === 'PATCH' && url.pathname.startsWith('/api/v1/supervisor/planos-acao/')) {
+    return asyncController(authorize(['SUPERVISOR'], patchPlanoAcao))(request, response, { url });
+  }
   const controller = routes.get(`${request.method} ${url.pathname}`);
   if (!controller) return json(response, 404, { error: 'Rota não encontrada' });
   return asyncController(controller)(request, response, { url });

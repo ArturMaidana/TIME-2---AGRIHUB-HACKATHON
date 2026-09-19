@@ -6,35 +6,37 @@ import { appConfig } from '../config/app-config.js';
 
 const METRICS = ['ENERGY', 'PHYSICAL', 'STRESS'];
 
-function findCurrentShift(unitId, now = new Date()) {
+async function findCurrentShift(unitId, now = new Date()) {
   const time = new Intl.DateTimeFormat('pt-BR', {
     timeZone: appConfig.timezone, hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(now);
-  const shifts = ShiftModel.listRawByUnit(unitId);
+  const shifts = await ShiftModel.listRawByUnit(unitId);
   return shifts.find((shift) => shift.start_time < shift.end_time
     ? time >= shift.start_time && time < shift.end_time
     : time >= shift.start_time || time < shift.end_time) ?? shifts[0];
 }
 
 export const TotemService = {
-  getContext(unitId) {
-    return {
-      sectors: SectorModel.listActiveByUnit(unitId),
-      shift: findCurrentShift(unitId),
-      date: dateKey(),
-    };
+  async getContext(unitId) {
+    const [sectors, shift] = await Promise.all([
+      SectorModel.listActiveByUnit(unitId),
+      findCurrentShift(unitId),
+    ]);
+    return { sectors, shift, date: dateKey() };
   },
 
-  record(unitId, { sectorId, answers }) {
+  async record(unitId, { sectorId, answers, idempotencyKey }) {
     const validAnswers = answers && METRICS.every((metric) =>
       Number.isInteger(answers[metric]) && answers[metric] >= 1 && answers[metric] <= 5);
-    if (!sectorId || !validAnswers) return { ok: false, error: 'Responda as três perguntas' };
-    if (!SectorModel.findActiveInUnit(sectorId, unitId)) {
+    if (!sectorId || !validAnswers || !idempotencyKey) {
+      return { ok: false, error: 'Responda as três perguntas' };
+    }
+    if (!(await SectorModel.findActiveInUnit(sectorId, unitId))) {
       return { ok: false, error: 'Setor inválido' };
     }
-    const shift = findCurrentShift(unitId);
-    ResponseModel.incrementAnswers({
-      unitId, sectorId, shiftId: shift.id, date: dateKey(), answers,
+    const shift = await findCurrentShift(unitId);
+    await ResponseModel.incrementAnswers({
+      unitId, sectorId, shiftId: shift.id, date: dateKey(), answers, idempotencyKey,
     });
     return { ok: true };
   },
