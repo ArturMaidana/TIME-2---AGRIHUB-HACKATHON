@@ -11,6 +11,7 @@
     "db:migrate": "node server/database/migrate.js",
     "db:status": "node server/database/status.js",
     "db:rebuild": "node server/database/rebuild.js",
+    "db:seed-demo": "node server/database/seed-demo.js",
     "ia:toggle": "node --env-file-if-exists=.env server/database/toggle-ia.js",
     "pretest": "node server/database/prepare.js",
     "test": "node --test --test-concurrency=1",

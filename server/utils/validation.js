@@ -7,3 +7,8 @@ export function isNonNegativeInteger(value) {
   const number = Number(value);
   return Number.isInteger(number) && number >= 0;
 }
+
+export function isNonNegativeNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0;
+}

@@ -1,7 +1,7 @@
 import { HrIndicatorModel } from '../models/hr-indicator-model.js';
 import { SectorModel } from '../models/sector-model.js';
 import { ShiftModel } from '../models/shift-model.js';
-import { isIsoDate, isNonNegativeInteger } from '../utils/validation.js';
+import { isIsoDate, isNonNegativeInteger, isNonNegativeNumber } from '../utils/validation.js';
 
 export const HrService = {
   async create(unitId, payload) {
@@ -17,7 +17,12 @@ export const HrService = {
     if (!isNonNegativeInteger(payload.absences) || !isNonNegativeInteger(payload.leaves)) {
       return { ok: false, error: 'Faltas e afastamentos devem ser inteiros não negativos' };
     }
-    await HrIndicatorModel.create({ unitId, ...payload });
+    const overtimeHours = payload.overtimeHours === '' || payload.overtimeHours === undefined
+      ? 0 : payload.overtimeHours;
+    if (!isNonNegativeNumber(overtimeHours)) {
+      return { ok: false, error: 'Horas extras devem ser um número não negativo' };
+    }
+    await HrIndicatorModel.create({ unitId, ...payload, overtimeHours });
     return { ok: true };
   },
 };

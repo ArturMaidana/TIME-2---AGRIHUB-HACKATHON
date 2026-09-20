@@ -16,13 +16,13 @@ export const HrIndicatorModel = {
     `, params);
   },
 
-  create({ unitId, sectorId, shiftId, period, absences, leaves }) {
+  create({ unitId, sectorId, shiftId, period, absences, leaves, overtimeHours }) {
     return execute(`
-      INSERT INTO hr_indicators(id, unit_id, sector_id, shift_id, period, absences, leaves, created_at)
-      VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO hr_indicators(id, unit_id, sector_id, shift_id, period, absences, leaves, overtime_hours, created_at)
+      VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [
       randomUUID(), unitId, sectorId, shiftId, period,
-      Number(absences), Number(leaves), new Date().toISOString(),
+      Number(absences), Number(leaves), Number(overtimeHours || 0), new Date().toISOString(),
     ]);
   },
 };
