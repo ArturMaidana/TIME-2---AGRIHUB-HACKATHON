@@ -121,15 +121,17 @@ export function Shell({ auth, onLogout }) {
         {/* Grupo superior de blocos/tiles */}
         <div className="sidebar-tiles-top">
           {/* 1. Visão Geral / Pulso da Operação */}
-          <button
-            type="button"
-            className={`sidebar-tile ${page === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setPage('dashboard')}
-            title="Visão Geral (Dashboard)"
-            aria-label="Visão Geral"
-          >
-            <LayoutDashboard size={21} />
-          </button>
+          {auth.role === 'SUPERVISOR' && (
+            <button
+              type="button"
+              className={`sidebar-tile ${page === 'dashboard' ? 'active' : ''}`}
+              onClick={() => setPage('dashboard')}
+              title="Visão Geral (Dashboard)"
+              aria-label="Visão Geral"
+            >
+              <LayoutDashboard size={21} />
+            </button>
+          )}
 
           {/* 2. Indicadores por Setor (Supervisor) ou Portal RH */}
           {auth.role === 'SUPERVISOR' ? (
@@ -154,16 +156,18 @@ export function Shell({ auth, onLogout }) {
             </button>
           )}
 
-          {/* 3. Análise Mensal Integrada */}
-          <button
-            type="button"
-            className={`sidebar-tile ${page === 'monthly' ? 'active' : ''}`}
-            onClick={() => setPage('monthly')}
-            title="Análise Mensal Integrada"
-            aria-label="Análise Mensal"
-          >
-            <CalendarDays size={21} />
-          </button>
+          {/* 3. Análise Mensal Integrada — só supervisor */}
+          {auth.role === 'SUPERVISOR' && (
+            <button
+              type="button"
+              className={`sidebar-tile ${page === 'monthly' ? 'active' : ''}`}
+              onClick={() => setPage('monthly')}
+              title="Análise Mensal Integrada"
+              aria-label="Análise Mensal"
+            >
+              <CalendarDays size={21} />
+            </button>
+          )}
 
           {/* 4. Notificações (reclamações/sugestões anônimas) — só supervisor */}
           {auth.role === 'SUPERVISOR' && (

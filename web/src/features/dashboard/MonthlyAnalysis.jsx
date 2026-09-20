@@ -1,5 +1,4 @@
 import {
-  Calendar,
   CalendarDays,
   Check,
   ChevronDown,
@@ -15,36 +14,28 @@ import { LineChart } from '../../components/LineChart.jsx';
 import { buildSectorRows } from './sector-utils.js';
 import { downloadCsv, rowsToCsv } from '../../utils/csv.js';
 
-const MONTH_OPTIONS = [
+const PERIOD_OPTIONS = [
   {
-    id: 'setembro',
-    title: 'Setembro / 2026',
-    badge: 'Mês Atual • Ao Vivo',
-    desc: 'Ciclo mensal vigente com cruzamento determinístico e sinais em tempo real',
-    icon: CalendarDays,
-    className: 'period-30',
-  },
-  {
-    id: 'agosto',
-    title: 'Agosto / 2026',
-    badge: 'Consolidado',
-    desc: 'Histórico fechado com 92% de planos de ação preventivos concluídos',
+    days: 7,
+    title: 'Últimos 7 dias',
+    badge: 'Tático / Semanal',
+    desc: 'Visão recente para avaliar impactos imediatos no ritmo dos turnos',
     icon: Clock,
     className: 'period-7',
   },
   {
-    id: 'julho',
-    title: 'Julho / 2026',
-    badge: 'Consolidado',
-    desc: 'Fechamento operacional com redução de 15% em afastamentos no frigorífico',
-    icon: Calendar,
-    className: 'period-7',
+    days: 30,
+    title: 'Últimos 30 dias',
+    badge: 'Padrão Recomendado',
+    desc: 'Base completa recomendada para cruzar bem-estar com dados do RH',
+    icon: CalendarDays,
+    className: 'period-30',
   },
   {
-    id: 'junho',
-    title: 'Junho / 2026',
-    badge: 'Fechamento Semestral',
-    desc: 'Balanço consolidado do primeiro semestre de monitoramento da planta',
+    days: 90,
+    title: 'Últimos 90 dias',
+    badge: 'Trimestral / Histórico',
+    desc: 'Tendência consolidada para planejamento estratégico e sazonalidade',
     icon: TrendingUp,
     className: 'period-90',
   },
@@ -53,21 +44,21 @@ const MONTH_OPTIONS = [
 export function MonthlyAnalysis({ auth }) {
   const [data, setData] = useState();
   const [planos, setPlanos] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState('setembro');
-  const [showMonthModal, setShowMonthModal] = useState(false);
+  const [days, setDays] = useState(30);
+  const [showPeriodModal, setShowPeriodModal] = useState(false);
 
   // Fecha modal com a tecla Esc
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setShowMonthModal(false);
+      if (e.key === 'Escape') setShowPeriodModal(false);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
-    api('/api/dashboard?days=30', {}, auth.token).then(setData);
-  }, [auth.token]);
+    api(`/api/dashboard?days=${days}`, {}, auth.token).then(setData);
+  }, [auth.token, days]);
 
   useEffect(() => {
     api('/api/v1/supervisor/analises?periodicidade=mensal', {}, auth.token)
@@ -82,7 +73,7 @@ export function MonthlyAnalysis({ auth }) {
 
   if (!data) return <div className="loading">Cruzando dados mensais…</div>;
 
-  const currentMonthObj = MONTH_OPTIONS.find((m) => m.id === selectedMonth) || MONTH_OPTIONS[0];
+  const currentPeriodObj = PERIOD_OPTIONS.find((p) => p.days === days) || PERIOD_OPTIONS[1];
   const ranked = buildSectorRows(data.sectorSummary).sort((a, b) => a.wellness - b.wellness);
   const hr = data.hr.reduce((total, item) => ({
     absences: total.absences + Number(item.absences),
@@ -93,7 +84,7 @@ export function MonthlyAnalysis({ auth }) {
 
   function exportCsv() {
     const rows = [
-      ['BEM-ESTAR POR SETOR (últimos 30 dias)'],
+      [`BEM-ESTAR POR SETOR (últimos ${days} dias)`],
       ['Setor', 'Categoria', 'Energia (1-5)', 'Dor/Cansaço (1-5)', 'Estresse (1-5)', 'Índice de Bem-estar (1-5)', 'Respostas anônimas'],
       ...ranked.map((row) => [
         row.name,
@@ -126,11 +117,11 @@ export function MonthlyAnalysis({ auth }) {
           <button
             type="button"
             className="filter-pill-btn"
-            onClick={() => setShowMonthModal(true)}
-            title="Filtrar por mês de referência"
+            onClick={() => setShowPeriodModal(true)}
+            title="Filtrar por período de análise"
           >
-            <span className="filter-pill-label">Mês:</span>
-            <span className="filter-pill-value">{currentMonthObj.title}</span>
+            <span className="filter-pill-label">Período:</span>
+            <span className="filter-pill-value">{currentPeriodObj.title}</span>
             <ChevronDown size={14} className="filter-pill-chevron" />
           </button>
 
@@ -171,7 +162,7 @@ export function MonthlyAnalysis({ auth }) {
 
       <section className="monthly-layout">
         <article className="card chart-card">
-          <span className="overline">EVOLUÇÃO DO MÊS</span>
+          <span className="overline">EVOLUÇÃO DO PERÍODO</span>
           <h2>Indicadores e comportamento coletivo</h2>
           <LineChart series={data.series} />
         </article>
@@ -264,11 +255,11 @@ export function MonthlyAnalysis({ auth }) {
         ))}
       </section>
 
-      {/* MODAL DE SELEÇÃO DE MÊS */}
-      {showMonthModal && (
+      {/* MODAL DE SELEÇÃO DE PERÍODO */}
+      {showPeriodModal && (
         <div
           className="filter-modal-backdrop"
-          onClick={() => setShowMonthModal(false)}
+          onClick={() => setShowPeriodModal(false)}
         >
           <div
             className="filter-modal-box"
@@ -282,14 +273,14 @@ export function MonthlyAnalysis({ auth }) {
                   <CalendarDays size={22} />
                 </div>
                 <div>
-                  <h3>Filtrar por Mês</h3>
-                  <p>Selecione o mês de referência para a análise integrada de bem-estar e RH</p>
+                  <h3>Filtrar por Período</h3>
+                  <p>Selecione a janela de dias usada na análise integrada de bem-estar e RH</p>
                 </div>
               </div>
               <button
                 type="button"
                 className="filter-modal-close-btn"
-                onClick={() => setShowMonthModal(false)}
+                onClick={() => setShowPeriodModal(false)}
                 aria-label="Fechar"
               >
                 <X size={18} />
@@ -298,17 +289,17 @@ export function MonthlyAnalysis({ auth }) {
 
             <div className="filter-modal-body">
               <div className="filter-options-grid">
-                {MONTH_OPTIONS.map((opt) => {
-                  const isSelected = selectedMonth === opt.id;
+                {PERIOD_OPTIONS.map((opt) => {
+                  const isSelected = days === opt.days;
                   const IconComponent = opt.icon;
 
                   return (
                     <div
-                      key={opt.id}
+                      key={opt.days}
                       className={`filter-option-card ${isSelected ? 'is-active' : ''}`}
                       onClick={() => {
-                        setSelectedMonth(opt.id);
-                        setShowMonthModal(false);
+                        setDays(opt.days);
+                        setShowPeriodModal(false);
                       }}
                       role="button"
                       tabIndex={0}
@@ -336,12 +327,12 @@ export function MonthlyAnalysis({ auth }) {
 
             <footer className="filter-modal-footer">
               <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                Mês de referência: <b>{currentMonthObj.title}</b>
+                Período: <b>{currentPeriodObj.title}</b>
               </span>
               <button
                 type="button"
                 className="filter-modal-btn-done"
-                onClick={() => setShowMonthModal(false)}
+                onClick={() => setShowPeriodModal(false)}
               >
                 Concluir
               </button>
