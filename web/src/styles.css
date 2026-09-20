@@ -2211,30 +2211,30 @@ h1, h2, h3, .brand {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Botão flutuante para sair de tela cheia no Totem */
-.totem-fs-floating {
+/* Toast informativo ao sair de tela cheia no Totem (gesto de 6 cliques) */
+.totem-exit-toast {
   position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 999;
-  background: rgba(16, 47, 41, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(16, 47, 41, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+  z-index: 9999;
+  animation: totemToastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
 }
 
-.totem-fs-floating:hover {
-  background: rgba(16, 47, 41, 1);
-  transform: scale(1.08);
+@keyframes totemToastIn {
+  0% { opacity: 0; transform: translate(-50%, 15px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* Corpo do Totem em Modo Horizontal */
@@ -2420,24 +2420,97 @@ h1, h2, h3, .brand {
   margin-left: 8px;
 }
 
-/* Indicadores de Pergunta / Dots */
+/* Indicadores de Pergunta / Dots Interativos */
 .question-dots {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin: 12px 0 20px;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 24px;
 }
 
-.question-dots i {
-  width: 44px;
-  height: 6px;
-  border-radius: 6px;
+.question-dots i,
+.question-dot {
+  width: 32px;
+  height: 8px;
+  border-radius: 999px;
   background: #dce5df;
-  transition: background 0.3s ease;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  display: inline-block;
 }
 
-.question-dots i.on {
+.question-dot:hover {
+  background: #b5c7bc;
+  transform: scaleY(1.2);
+}
+
+.question-dots i.on,
+.question-dot.on {
   background: var(--green);
+}
+
+.question-dot.current {
+  width: 52px;
+  background: #1c7c58;
+  box-shadow: 0 2px 8px rgba(28, 124, 88, 0.35);
+}
+
+/* Transições animadas do container de pergunta */
+.totem-question-step {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: transform, opacity;
+}
+
+.totem-question-step.anim-in {
+  animation: totemFadeSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.totem-question-step.anim-out-next {
+  animation: totemFadeSlideOutLeft 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.totem-question-step.anim-out-prev {
+  animation: totemFadeSlideOutRight 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes totemFadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(36px, 0, 0) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes totemFadeSlideOutLeft {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-36px, 0, 0) scale(0.97);
+  }
+}
+
+@keyframes totemFadeSlideOutRight {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(36px, 0, 0) scale(0.97);
+  }
 }
 
 /* Botões de Humor / Escala de 1 a 5 */
@@ -2462,6 +2535,8 @@ h1, h2, h3, .brand {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   padding: 14px 8px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mood-btn:hover {
@@ -2470,11 +2545,22 @@ h1, h2, h3, .brand {
   transform: translateY(-5px);
 }
 
+.mood-btn:active {
+  transform: scale(0.96);
+}
+
 .mood-btn.is-selected {
   border-color: #1c7c58;
   background: #eef7f2;
-  box-shadow: 0 8px 24px rgba(28, 124, 88, 0.22);
-  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 26px rgba(28, 124, 88, 0.26);
+  transform: translateY(-4px) scale(1.03);
+  animation: moodPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes moodPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+  100% { transform: scale(1.03); }
 }
 
 .mood-emoji {

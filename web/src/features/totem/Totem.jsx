@@ -7,16 +7,22 @@ import {
   Flame,
   LogOut,
   Maximize,
-  Minimize,
   Package,
   ShieldCheck,
   Snowflake,
   Sparkles,
   Truck,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/client.js';
 import { Brand } from '../../components/Brand.jsx';
+
+function generateId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'totem-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
+}
 
 const moods = [
   { emoji: '😣', score: 1, label: 'Péssimo' },
@@ -64,12 +70,19 @@ export function Totem({ auth, onLogout }) {
   const [sector, setSector] = useState(null);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [selectedScore, setSelectedScore] = useState(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDir, setTransitionDir] = useState('next');
   const [sent, setSent] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [exitToast, setExitToast] = useState(false);
   const [isPortrait, setIsPortrait] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(orientation: portrait)').matches;
   });
+
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef(null);
 
   // Sincroniza estado de tela cheia com a API do navegador
   useEffect(() => {
@@ -85,6 +98,41 @@ export function Totem({ auth, onLogout }) {
     };
   }, []);
 
+  // Gesto secreto de 6 cliques para sair da tela cheia quando expandida
+  useEffect(() => {
+    if (!isFullscreen) {
+      clickCountRef.current = 0;
+      return;
+    }
+
+    const handleGlobalClick = () => {
+      clickCountRef.current += 1;
+
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+      }
+
+      if (clickCountRef.current >= 6) {
+        clickCountRef.current = 0;
+        setExitToast(true);
+        setTimeout(() => setExitToast(false), 2000);
+        exitFullscreen();
+        return;
+      }
+
+      // Reseta se o usuário demorar mais de 3.5 segundos entre cliques
+      clickTimerRef.current = setTimeout(() => {
+        clickCountRef.current = 0;
+      }, 3500);
+    };
+
+    window.addEventListener('click', handleGlobalClick, true);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick, true);
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    };
+  }, [isFullscreen]);
+
   // Detecta mudança de orientação (vertical vs horizontal)
   useEffect(() => {
     const mq = window.matchMedia('(orientation: portrait)');
@@ -97,46 +145,100 @@ export function Totem({ auth, onLogout }) {
     api('/api/totem', {}, auth.token).then(setData);
   }, [auth.token]);
 
+  const exitFullscreen = () => {
+    const doc = document;
+    const fsEl = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+    if (fsEl) {
+      if (doc.exitFullscreen) doc.exitFullscreen().catch(() => {});
+      else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+      else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
+      else if (doc.msExitFullscreen) doc.msExitFullscreen();
+    }
+    setIsFullscreen(false);
+  };
+
   const toggleFullscreen = () => {
     const docEl = document.documentElement;
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
     if (!fsEl) {
-      if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
-      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {
+          setIsFullscreen(true);
+        });
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        setIsFullscreen(true);
+      }
     } else {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      exitFullscreen();
     }
   };
 
   async function submitResponses(targetSector, targetAnswers) {
-    if (!targetSector || !targetAnswers.ENERGY || !targetAnswers.PHYSICAL || !targetAnswers.STRESS) return;
-    await api('/api/totem/responses', {
-      method: 'POST',
-      body: JSON.stringify({
-        sectorId: targetSector.id,
-        answers: targetAnswers,
-        idempotencyKey: crypto.randomUUID(),
-      }),
-    }, auth.token);
-    setSent(true);
-    setTimeout(() => {
-      setSector(null);
-      setStep(0);
-      setAnswers({});
-      setSent(false);
-    }, 2200);
+    if (!targetSector) return;
+    const completeAnswers = {
+      ENERGY: targetAnswers.ENERGY || 3,
+      PHYSICAL: targetAnswers.PHYSICAL || 3,
+      STRESS: targetAnswers.STRESS || 3,
+      ...targetAnswers,
+    };
+
+    try {
+      await api('/api/totem/responses', {
+        method: 'POST',
+        body: JSON.stringify({
+          sectorId: targetSector.id,
+          answers: completeAnswers,
+          idempotencyKey: generateId(),
+        }),
+      }, auth.token);
+    } catch (err) {
+      console.error('Erro ao registrar resposta do totem:', err);
+    } finally {
+      setSent(true);
+      setTimeout(() => {
+        setSector(null);
+        setStep(0);
+        setAnswers({});
+        setSelectedScore(null);
+        setSent(false);
+      }, 2200);
+    }
   }
 
-  // Resposta em modo horizontal (um passo por vez)
+  // Resposta em modo horizontal com transição animada fluida
   function answerStepHorizontal(score) {
-    const next = { ...answers, [questions[step].key]: score };
-    setAnswers(next);
-    if (step < 2) {
-      setStep(step + 1);
-    } else {
-      submitResponses(sector, next);
-    }
+    if (isTransitioning) return;
+    setSelectedScore(score);
+    const nextAnswers = { ...answers, [questions[step].key]: score };
+    setAnswers(nextAnswers);
+
+    setIsTransitioning(true);
+    setTransitionDir('next');
+
+    setTimeout(() => {
+      if (step < 2) {
+        const nextStep = step + 1;
+        setStep(nextStep);
+        setSelectedScore(nextAnswers[questions[nextStep]?.key] || null);
+      } else {
+        submitResponses(sector, nextAnswers);
+      }
+      setIsTransitioning(false);
+    }, 280);
+  }
+
+  function goToStepHorizontal(targetStep) {
+    if (isTransitioning || targetStep === step) return;
+    setTransitionDir(targetStep > step ? 'next' : 'prev');
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setStep(targetStep);
+      setSelectedScore(answers[questions[targetStep]?.key] || null);
+      setIsTransitioning(false);
+    }, 200);
   }
 
   if (!data) return <div className="loading">Preparando o totem…</div>;
@@ -153,17 +255,11 @@ export function Totem({ auth, onLogout }) {
 
   return (
     <main className={`totem ${isFullscreen ? 'is-fullscreen' : ''} ${isPortrait ? 'is-portrait' : 'is-landscape'}`}>
-      {/* Botão flutuante discreto para sair de tela cheia quando a topbar está oculta */}
-      {isFullscreen && (
-        <button
-          type="button"
-          className="totem-fs-floating"
-          onClick={toggleFullscreen}
-          title="Sair da Tela Cheia"
-          aria-label="Sair da Tela Cheia"
-        >
-          <Minimize size={18} />
-        </button>
+      {/* Toast informativo ao sair de tela cheia por 6 cliques */}
+      {exitToast && (
+        <div className="totem-exit-toast">
+          Saindo da tela cheia...
+        </div>
       )}
 
       {/* Topbar verde com logo - OCULTADA em tela cheia como solicitado */}
@@ -433,30 +529,45 @@ export function Totem({ auth, onLogout }) {
               </span>
             </div>
 
-            <div className="question-dots">
-              <i className={step >= 0 ? 'on' : ''} />
-              <i className={step >= 1 ? 'on' : ''} />
-              <i className={step >= 2 ? 'on' : ''} />
+            <div className="question-dots" role="tablist" aria-label="Progresso das perguntas">
+              {questions.map((q, idx) => (
+                <button
+                  key={q.key}
+                  type="button"
+                  className={`question-dot ${step === idx ? 'current' : ''} ${step >= idx ? 'on' : ''}`}
+                  onClick={() => goToStepHorizontal(idx)}
+                  title={`Pergunta ${idx + 1}: ${q.shortTitle}`}
+                  aria-label={`Ir para pergunta ${idx + 1}`}
+                />
+              ))}
             </div>
 
-            <h1>{questions[step].title}</h1>
-            <p>Toque na opção que melhor representa você agora.</p>
+            <div
+              key={step}
+              className={`totem-question-step ${isTransitioning ? `anim-out-${transitionDir}` : 'anim-in'}`}
+            >
+              <h1>{questions[step].title}</h1>
+              <p>Toque na opção que melhor representa você agora.</p>
 
-            <div className="moods">
-              {moods.map((m) => (
-                <button
-                  type="button"
-                  key={m.score}
-                  className="mood-btn"
-                  onClick={() => answerStepHorizontal(m.score)}
-                >
-                  <span className="mood-emoji">{m.emoji}</span>
-                  <b className="mood-score">{m.score}</b>
-                  <small className="mood-label">
-                    {m.score === 1 ? questions[step].low : m.score === 5 ? questions[step].high : m.label}
-                  </small>
-                </button>
-              ))}
+              <div className="moods">
+                {moods.map((m) => {
+                  const isSelected = selectedScore === m.score || answers[questions[step].key] === m.score;
+                  return (
+                    <button
+                      type="button"
+                      key={m.score}
+                      className={`mood-btn ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => answerStepHorizontal(m.score)}
+                    >
+                      <span className="mood-emoji">{m.emoji}</span>
+                      <b className="mood-score">{m.score}</b>
+                      <small className="mood-label">
+                        {m.score === 1 ? questions[step].low : m.score === 5 ? questions[step].high : m.label}
+                      </small>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </section>
         )
