@@ -1,5 +1,5 @@
 import {
-  CheckCircle2, ChevronLeft, LogOut, MessageSquareText, Send, ShieldCheck, Users,
+  Check, CheckCircle2, ChevronLeft, LogOut, MessageSquareText, Send, ShieldCheck, Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
@@ -105,12 +105,11 @@ export function ChatAnonimo({ auth, onLogout }) {
                       const SecIcon = getSectorIcon(item.name, item.category);
                       const isSelected = setor?.id === item.id;
                       return (
-                        <div
+                        <button
                           key={item.id}
+                          type="button"
                           className={`totem-sector-card ${isSelected ? 'is-selected' : ''}`}
                           onClick={() => setSetor(item)}
-                          role="button"
-                          tabIndex={0}
                         >
                           <div className="totem-sector-main">
                             <div className={`totem-sector-icon-box ${tone}`}>
@@ -118,7 +117,10 @@ export function ChatAnonimo({ auth, onLogout }) {
                             </div>
                             <div className="totem-sector-info"><strong>{item.name}</strong></div>
                           </div>
-                        </div>
+                          <div className="totem-sector-check">
+                            <Check size={16} strokeWidth={3} />
+                          </div>
+                        </button>
                       );
                     })}
                   </div>

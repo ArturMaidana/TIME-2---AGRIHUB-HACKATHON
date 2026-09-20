@@ -199,6 +199,11 @@ export function LineChart({ series = [] }) {
                 <stop offset="100%" stopColor={cfg.gradientTo} />
               </linearGradient>
             ))}
+            {Object.entries(METRICS_CONFIG).map(([key, cfg]) => (
+              <filter key={key} id={`glow-${key}-${chartId}`} x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="1.5" stdDeviation="2.2" floodColor={cfg.color} floodOpacity="0.5" />
+              </filter>
+            ))}
           </defs>
 
           {[1, 2, 3, 4, 5].map((level) => {
@@ -253,6 +258,7 @@ export function LineChart({ series = [] }) {
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    filter={`url(#glow-${key}-${chartId})`}
                     className="chart-line-path"
                   />
                 );
@@ -270,10 +276,11 @@ export function LineChart({ series = [] }) {
                           key={idx}
                           cx={p.x}
                           cy={p.y}
-                          r={isHovered ? 5.5 : 3}
+                          r={isHovered ? 5.5 : 2}
                           fill={isHovered ? '#fff' : cfg.color}
                           stroke={cfg.color}
-                          strokeWidth={isHovered ? 3 : 1.5}
+                          strokeWidth={isHovered ? 3 : 1.2}
+                          opacity={isHovered ? 1 : 0.55}
                           className="chart-dot"
                         />
                       );

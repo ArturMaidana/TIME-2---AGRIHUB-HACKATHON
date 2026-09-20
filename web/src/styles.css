@@ -1599,12 +1599,30 @@ h1, h2, h3, .brand {
 }
 
 .chart-dot {
-  transition: r 0.2s ease, stroke-width 0.2s ease;
+  transition: r 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
   cursor: pointer;
 }
 
 .chart-bar-rect {
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chart-line-path {
+  animation: chartLineIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.chart-area-path {
+  animation: chartAreaIn 0.5s ease-out both;
+}
+
+@keyframes chartLineIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes chartAreaIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .chart-tooltip-floating {
@@ -2509,11 +2527,15 @@ h1, h2, h3, .brand {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   padding: 16px 18px;
   border-radius: 18px;
   background: #0e1b17;
   border: 2px solid #263c33;
   cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 14px rgba(16, 35, 28, 0.04);
 }
