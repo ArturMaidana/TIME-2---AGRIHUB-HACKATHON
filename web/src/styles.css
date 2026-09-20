@@ -3631,6 +3631,12 @@ h1, h2, h3, .brand {
   color: #ffffff !important;
 }
 
+.metric.highlight-hero .metric-icon-box {
+  background: rgba(5, 48, 34, 0.42) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
 .metric.highlight-hero .metric-note {
   color: #d9eee4 !important;
 }
