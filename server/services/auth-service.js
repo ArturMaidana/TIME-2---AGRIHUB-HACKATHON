@@ -13,12 +13,25 @@ export const AuthService = {
       };
     }
 
+    if (type === 'FUNCIONARIO' && !code?.trim()) {
+      const unit = await AuthModel.findAnyUnit();
+      if (!unit) return null;
+      const user = await AuthModel.createFuncionarioPseudonimo(unit.id);
+      return {
+        token: createSession({ role: 'FUNCIONARIO', unitId: unit.id, userId: user.id }),
+        role: 'FUNCIONARIO',
+        name: user.name,
+        code: user.code,
+      };
+    }
+
     const user = await AuthModel.findUserByCode(code);
     if (!user) return null;
     return {
       token: createSession({ role: user.role, unitId: user.unit_id, userId: user.id }),
       role: user.role,
       name: user.name,
+      code: user.code,
     };
   },
 };

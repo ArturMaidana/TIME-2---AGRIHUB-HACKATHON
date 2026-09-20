@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Download,
   Sparkles,
   TrendingUp,
   X,
@@ -12,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { LineChart } from '../../components/LineChart.jsx';
 import { buildSectorRows } from './sector-utils.js';
+import { downloadCsv, rowsToCsv } from '../../utils/csv.js';
 
 const MONTH_OPTIONS = [
   {
@@ -89,12 +91,34 @@ export function MonthlyAnalysis({ auth }) {
   const responses = Math.round(data.series.reduce((sum, item) => sum + Number(item.responses), 0) / 3);
   const focus = ranked[0];
 
+  function exportCsv() {
+    const rows = [
+      ['BEM-ESTAR POR SETOR (últimos 30 dias)'],
+      ['Setor', 'Categoria', 'Energia (1-5)', 'Dor/Cansaço (1-5)', 'Estresse (1-5)', 'Índice de Bem-estar (1-5)', 'Respostas anônimas'],
+      ...ranked.map((row) => [
+        row.name,
+        row.category === 'QUENTE' ? 'Área Quente' : 'Área Fria',
+        row.ENERGY?.toFixed(2) ?? '',
+        row.PHYSICAL?.toFixed(2) ?? '',
+        row.STRESS?.toFixed(2) ?? '',
+        row.wellness.toFixed(2),
+        row.responses,
+      ]),
+      [],
+      ['INDICADORES ESTRATÉGICOS DE GESTÃO DE PESSOAS'],
+      ['Setor', 'Turno', 'Período', 'Faltas', 'Afastamentos'],
+      ...data.hr.map((item) => [item.sector, item.shift, item.period, item.absences, item.leaves]),
+    ];
+
+    downloadCsv(`bem-estar-indicadores-rh-${new Date().toISOString().slice(0, 10)}.csv`, rowsToCsv(rows));
+  }
+
   return (
     <div className="content">
       <header className="page-head">
         <div>
           <span className="overline">ANÁLISE MENSAL INTEGRADA</span>
-          <h1>Bem-estar + dados do RH</h1>
+          <h1>Bem-estar + indicadores estratégicos de Gestão de pessoas</h1>
           <p>A IA cruza os sinais anônimos com faltas e afastamentos do período.</p>
         </div>
 
@@ -108,6 +132,16 @@ export function MonthlyAnalysis({ auth }) {
             <span className="filter-pill-label">Mês:</span>
             <span className="filter-pill-value">{currentMonthObj.title}</span>
             <ChevronDown size={14} className="filter-pill-chevron" />
+          </button>
+
+          <button
+            type="button"
+            className="filter-pill-btn"
+            onClick={exportCsv}
+            title="Exportar os dados desta análise em CSV"
+          >
+            <Download size={14} />
+            <span className="filter-pill-label">Exportar CSV</span>
           </button>
         </div>
       </header>
@@ -148,6 +182,9 @@ export function MonthlyAnalysis({ auth }) {
           </div>
           <h2>{data.analysis.title}</h2>
           <p>{data.analysis.monthly}</p>
+          {data.analysis.poweredByAI && (
+            <small className="ai-powered-badge">✨ Resumo gerado por IA (Groq)</small>
+          )}
 
           <div className="correlation">
             <span>1</span>
@@ -187,7 +224,7 @@ export function MonthlyAnalysis({ auth }) {
               <span>{index + 1}</span>
               <div>
                 <strong>{row.name}</strong>
-                <small>{row.category === 'QUENTE' ? 'Área Quente' : 'Área Fria'}</small>
+                <small> - {row.category === 'QUENTE' ? 'Área Quente' : 'Área Fria'}</small>
               </div>
               <b>{row.wellness.toFixed(1)}/5</b>
               <i><span style={{ width: `${row.wellness * 20}%` }} /></i>
@@ -204,7 +241,7 @@ export function MonthlyAnalysis({ auth }) {
           </div>
         </header>
         {planos.length === 0 && <p>Nenhum plano gerado ainda.</p>}
-        {planos.map((plano) => (
+        {planos.slice(0, 5).map((plano) => (
           <div className="plan-item" key={plano.id}>
             <div>
               <strong>{plano.setor_nome} - {plano.turno_nome}</strong>

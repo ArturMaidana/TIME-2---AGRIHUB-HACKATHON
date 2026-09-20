@@ -1,4 +1,5 @@
 import {
+  Bell,
   CalendarDays,
   ClipboardList,
   Factory,
@@ -11,8 +12,10 @@ import {
   User,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { api } from '../api/client.js';
 import { Dashboard } from '../features/dashboard/Dashboard.jsx';
 import { MonthlyAnalysis } from '../features/dashboard/MonthlyAnalysis.jsx';
+import { Notifications } from '../features/dashboard/Notifications.jsx';
 import { SectorIndicators } from '../features/dashboard/SectorIndicators.jsx';
 import { RhPortal } from '../features/hr/RhPortal.jsx';
 
@@ -21,6 +24,14 @@ export function Shell({ auth, onLogout }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
+
+  useEffect(() => {
+    if (auth.role !== 'SUPERVISOR') return;
+    api('/api/v1/supervisor/notificacoes?status=ABERTO', {}, auth.token)
+      .then((res) => setNotifCount(res.notificacoes.length))
+      .catch(() => {});
+  }, [auth.token, auth.role, page]);
 
   // Sincroniza estado de tela cheia com a API do navegador
   useEffect(() => {
@@ -69,7 +80,8 @@ export function Shell({ auth, onLogout }) {
   const content = page === 'rh' ? <RhPortal auth={auth} />
     : page === 'sectors' ? <SectorIndicators auth={auth} />
       : page === 'monthly' ? <MonthlyAnalysis auth={auth} />
-        : <Dashboard auth={auth} />;
+        : page === 'notifications' ? <Notifications auth={auth} />
+          : <Dashboard auth={auth} />;
 
   return (
     <div className="shell-layout">
@@ -152,6 +164,21 @@ export function Shell({ auth, onLogout }) {
           >
             <CalendarDays size={21} />
           </button>
+
+          {/* 4. Notificações (reclamações/sugestões anônimas) — só supervisor */}
+          {auth.role === 'SUPERVISOR' && (
+            <button
+              type="button"
+              className={`sidebar-tile ${page === 'notifications' ? 'active' : ''}`}
+              onClick={() => setPage('notifications')}
+              title="Notificações (reclamações e sugestões)"
+              aria-label="Notificações"
+              style={{ position: 'relative' }}
+            >
+              <Bell size={21} />
+              {notifCount > 0 && <span className="alert-badge-count" style={{ position: 'absolute', top: 4, right: 4, fontSize: 9, padding: '1px 5px' }}>{notifCount}</span>}
+            </button>
+          )}
 
         </div>
 

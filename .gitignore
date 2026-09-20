@@ -4,3 +4,4 @@ data/
 .sites-runtime/
 .DS_Store
 npm-debug.log*
+.env

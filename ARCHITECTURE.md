@@ -17,7 +17,11 @@ HTTP → Routes → Middleware → Controllers → Services → Models → Postg
 - `server/controllers`: traduz HTTP em chamadas de negócio e respostas.
 - `server/services`: orquestram modelos e, quando aplicável, funções puras de
   `src/domain`. `SupervisorAnalyticsService` concentra índice, comparação,
-  participação, alertas, análises e planos de ação.
+  participação, alertas, análises e planos de ação; opcionalmente enriquece o resumo
+  da análise chamando `groq-client.js` (IA generativa, ligada/desligada por flag em
+  `configuracoes_indicadores.usar_ia_generativa`, com cache por hash da entrada em
+  `analises_periodicas.resumo_ia`/`hash_entrada`) — nunca substitui o cálculo
+  determinístico, só o texto.
 - `server/models`: consultas e comandos de persistência via `pg` (sem ORM).
 - `server/views`: entrega do frontend compilado.
 - `server/config`: pool de conexão Postgres (`database.js`), sessões e configuração
@@ -70,6 +74,11 @@ controladores do backend.
 | `GET` | `/api/v1/supervisor/analises` | SupervisorController → SupervisorAnalyticsService |
 | `GET` | `/api/v1/supervisor/planos-acao` | SupervisorController → SupervisorAnalyticsService |
 | `PATCH` | `/api/v1/supervisor/planos-acao/:id` | SupervisorController → SupervisorAnalyticsService |
+| `GET` | `/api/v1/supervisor/notificacoes` | SupervisorController → SupervisorAnalyticsService |
+| `PATCH` | `/api/v1/supervisor/notificacoes/:id` | SupervisorController → SupervisorAnalyticsService |
+| `GET` | `/api/chat/contexto` | ChatController → ChatService |
+| `GET` | `/api/chat/mensagens` | ChatController → ChatService |
+| `POST` | `/api/chat/mensagens` | ChatController → ChatService |
 
 As rotas protegidas passam pelo middleware `authorize`, que resolve a sessão no
 servidor e impede que o perfil Totem acesse o dashboard ou os dados do RH. As rotas
@@ -79,8 +88,11 @@ servidor e impede que o perfil Totem acesse o dashboard ou os dados do RH. As ro
 ## Configuração
 
 As variáveis aceitas estão documentadas em `.env.example` (`DATABASE_URL`,
-`DATABASE_SSL`, `PORT`, `APP_TIMEZONE`). Valores ausentes usam padrões seguros para a
-demonstração local (Postgres do `docker-compose.yml`). O banco é inicializado em três
+`DATABASE_SSL`, `PORT`, `APP_TIMEZONE`, `GROQ_API_KEY`). Valores ausentes usam padrões
+seguros para a demonstração local (Postgres do `docker-compose.yml`); sem
+`GROQ_API_KEY`, o resumo das análises simplesmente cai no texto determinístico. O
+`start`/`ia:toggle` do `package.json` carregam `.env` via `--env-file-if-exists`
+(nativo do Node 22+, sem dependência extra). O banco é inicializado em três
 etapas, executadas no boot do servidor (`server/index.js`) e antes da suíte de testes
 (`pretest` → `server/database/prepare.js`):
 

@@ -73,7 +73,7 @@ body,
   .other-sectors-card-unified, .other-sector-btn-card, .task-item-row,
   .task-progress-box, .device-row, .correlation, .plan-item,
   .hr-stat-box, .modal-avatar, .modal-close-btn, .modal-action-btn,
-  .presence-modal-box, .modal-info-box, .status-dot) {
+  .presence-modal-box, .modal-info-box, .status-dot, .chat-item-resposta) {
   border-radius: 4px !important;
 }
 
@@ -1410,6 +1410,14 @@ h1, h2, h3, .brand {
   margin: 0;
 }
 
+.ai-powered-badge {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
 /* ==========================================================================
    HR Prototype Card
    ========================================================================== */
@@ -2133,6 +2141,10 @@ h1, h2, h3, .brand {
   transform: translate(40px, -160px) scale(1.08) rotate(-30deg);
 }
 
+.login.mode-funcionario .login-art:after {
+  transform: translate(-30px, -110px) scale(1.05) rotate(12deg);
+}
+
 .login-art > div:not(.brand) {
   position: relative;
   z-index: 1;
@@ -2204,7 +2216,7 @@ h1, h2, h3, .brand {
 
 .role-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   background: #17231e;
   border-radius: 14px;
   padding: 5px;
@@ -2232,7 +2244,7 @@ h1, h2, h3, .brand {
   position: absolute;
   top: 5px;
   bottom: 5px;
-  width: calc((100% - 10px) / 3);
+  width: calc((100% - 10px) / 4);
   background: #0e1b17;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(23, 51, 46, 0.1);
@@ -2243,6 +2255,7 @@ h1, h2, h3, .brand {
 .role-tabs.active-0 .role-tabs-indicator { transform: translateX(0%); }
 .role-tabs.active-1 .role-tabs-indicator { transform: translateX(100%); }
 .role-tabs.active-2 .role-tabs-indicator { transform: translateX(200%); }
+.role-tabs.active-3 .role-tabs-indicator { transform: translateX(300%); }
 
 .login-form label {
   display: grid;
@@ -2545,6 +2558,12 @@ h1, h2, h3, .brand {
   color: #2b7bc4;
 }
 
+.totem-sector-icon-box.admin {
+  background: #241f30;
+  border: 1px solid #ddd2f5;
+  color: #8b6fd6;
+}
+
 .totem-sector-info {
   min-width: 0;
   text-align: left;
@@ -2575,6 +2594,11 @@ h1, h2, h3, .brand {
 .totem-sector-info span.cold {
   background: #122630;
   color: #62afe8;
+}
+
+.totem-sector-info span.admin {
+  background: #241f30;
+  color: #b09cec;
 }
 
 .totem-sector-check {
@@ -2923,6 +2947,168 @@ h1, h2, h3, .brand {
   gap: 6px;
   font-size: 12.5px;
   color: var(--muted);
+}
+
+/* ==========================================================================
+   Modo Vertical: tudo cabe na tela do tablet, sem precisar rolar.
+   Todas as medidas usam clamp() ancorado em dvh, então o layout inteiro
+   encolhe junto com a altura real da tela em vez de depender de um
+   breakpoint fixo para um único tamanho de tablet. Restrito a min-width:600px
+   para não mexer no layout (já rolável, e testado) de telas de celular, onde
+   o próprio cabeçalho do totem quebra em duas linhas por falta de espaço.
+   ========================================================================== */
+@media (min-width: 600px) {
+  .totem.is-portrait {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .totem.is-portrait footer {
+    display: none;
+  }
+
+  .totem.is-portrait .totem-header {
+    height: clamp(48px, 6dvh, 64px);
+  }
+
+  .totem-vertical-scroll {
+    padding: clamp(6px, 1.2dvh, 16px) clamp(12px, 3vw, 24px);
+    gap: clamp(4px, 0.8dvh, 10px);
+    flex: 1;
+    min-height: 0;
+    justify-content: center;
+  }
+
+  .totem-vertical-header-title {
+    margin-bottom: 0;
+  }
+
+  .totem-vertical-header-title .step {
+    font-size: 10.5px;
+  }
+
+  .totem-vertical-header-title h1 {
+    font-size: clamp(16px, 2.6dvh, 24px);
+    margin: clamp(1px, 0.4dvh, 4px) 0;
+  }
+
+  .totem-vertical-header-title p {
+    display: none;
+  }
+
+  .totem-vertical-scroll .totem-section-box {
+    padding: clamp(6px, 1.2dvh, 12px) clamp(10px, 2vw, 18px);
+    border-radius: 14px;
+  }
+
+  .totem-vertical-scroll .totem-section-header {
+    margin-bottom: clamp(4px, 1dvh, 10px);
+  }
+
+  .totem-vertical-scroll .totem-section-header h3 {
+    font-size: clamp(12px, 1.6dvh, 15px);
+  }
+
+  .totem-vertical-scroll .totem-section-subtitle {
+    display: none;
+  }
+
+  .totem-vertical-scroll .totem-section-badge {
+    font-size: 10.5px;
+    padding: 3px 9px;
+  }
+
+  .totem-vertical-scroll .totem-sector-groups {
+    gap: clamp(5px, 1dvh, 12px);
+    margin: clamp(4px, 1dvh, 10px) 0 0;
+  }
+
+  .totem-vertical-scroll .totem-category-label {
+    font-size: 9.5px;
+    margin-bottom: 3px;
+  }
+
+  .totem-vertical-scroll .totem-sector-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 5px;
+  }
+
+  .totem-vertical-scroll .totem-sector-card {
+    padding: clamp(4px, 0.7dvh, 8px) 7px;
+    border-radius: 10px;
+  }
+
+  .totem-vertical-scroll .totem-sector-main {
+    gap: 6px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .totem-vertical-scroll .totem-sector-icon-box {
+    width: clamp(20px, 2.6dvh, 26px);
+    height: clamp(20px, 2.6dvh, 26px);
+    border-radius: 7px;
+  }
+
+  .totem-vertical-scroll .totem-sector-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .totem-vertical-scroll .totem-sector-info strong {
+    font-size: clamp(10px, 1.3dvh, 12px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .totem-vertical-scroll .totem-sector-info span {
+    display: none;
+  }
+
+  .totem-vertical-scroll .totem-sector-check {
+    width: 16px;
+    height: 16px;
+  }
+
+  .totem-vertical-scroll .moods.moods-vertical {
+    gap: clamp(4px, 0.8dvh, 8px);
+    margin-top: clamp(2px, 0.5dvh, 6px);
+  }
+
+  .totem-vertical-scroll .moods.moods-vertical .mood-btn {
+    height: clamp(38px, 5.6dvh, 56px);
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .totem-vertical-scroll .moods.moods-vertical .mood-emoji {
+    font-size: clamp(15px, 2.1dvh, 22px);
+    margin-bottom: 1px;
+  }
+
+  .totem-vertical-scroll .moods.moods-vertical .mood-score {
+    font-size: 11px;
+  }
+
+  .totem-vertical-scroll .moods.moods-vertical .mood-label {
+    display: none;
+  }
+
+  .totem-vertical-scroll .totem-confirm-bar {
+    gap: 5px;
+    margin-top: clamp(3px, 0.8dvh, 8px);
+  }
+
+  .totem-vertical-scroll .totem-confirm-btn {
+    height: clamp(42px, 6dvh, 54px);
+    font-size: 14.5px;
+  }
+
+  .totem-vertical-scroll .totem-progress-note,
+  .totem-vertical-scroll .totem-anon-notice {
+    font-size: 11px;
+  }
 }
 
 /* Tela de Agradecimento */
@@ -3898,4 +4084,119 @@ h1, h2, h3, .brand {
   .modal-details-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==========================================================================
+   Chat Anônimo — portal do funcionário e notificações do supervisor
+   ========================================================================== */
+.chat-code-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff1; color: #fff; padding: 6px 12px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .02em;
+}
+.chat-back-btn {
+  display: inline-flex; align-items: center; gap: 4px; border: 0; background: transparent;
+  color: var(--muted); font-weight: 700; font-size: 13px; padding: 0; margin-bottom: 10px; cursor: pointer;
+  transition: color .15s ease;
+}
+.chat-back-btn:hover { color: var(--green); }
+.chat-new-btn { width: fit-content; margin: 18px 0 22px; }
+.chat-empty { color: var(--muted); }
+
+.chat-privacy-note {
+  display: flex; align-items: flex-start; gap: 8px; width: min(700px, 100%);
+  margin: 18px 0 4px; padding: 12px 14px; border-radius: var(--card-radius, 10px);
+  background: rgba(168, 213, 95, 0.08); border: 1px solid rgba(168, 213, 95, 0.25);
+  color: var(--muted); font-size: 12.5px; line-height: 1.55; text-align: left;
+}
+.chat-privacy-note svg { flex-shrink: 0; margin-top: 2px; color: var(--lime, #a8d55f); }
+
+.chat-list { display: grid; gap: 14px; width: min(760px, 100%); }
+.chat-item {
+  background: var(--card-bg); border: 1px solid var(--card-border, var(--line));
+  border-radius: var(--card-radius, 14px); padding: 20px 22px; text-align: left;
+  box-shadow: var(--shadow-sm); transition: box-shadow .2s ease, border-color .2s ease;
+}
+.chat-item:hover { box-shadow: var(--shadow-md); border-color: var(--muted-light, var(--line)); }
+.chat-item header {
+  display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted);
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.chat-item header b {
+  margin-left: auto; display: inline-grid; place-items: center; padding: 4px 10px;
+  border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .04em;
+}
+.chat-item header b.good { background: #def1e5; color: #237351; }
+.chat-item header b.watch { background: #fff0d9; color: #9a642c; }
+.chat-item header b.alert { background: #f8e3dd; color: #a34d37; }
+.chat-tipo-badge {
+  display: inline-grid; place-items: center; padding: 4px 10px; border-radius: 999px;
+  font-size: 10px; font-weight: 800; letter-spacing: .04em;
+}
+.chat-tipo-badge.alert { background: #f8e3dd; color: #a34d37; }
+.chat-tipo-badge.good { background: #e6f3ec; color: var(--green); }
+.chat-item-mensagem { margin: 0; color: inherit; line-height: 1.6; font-size: 14.5px; }
+.chat-item-resposta {
+  margin-top: 14px; padding: 12px 14px;
+  background: rgba(57, 168, 117, 0.08); border: 1px solid rgba(57, 168, 117, 0.2);
+}
+.chat-item-resposta strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--green); margin-bottom: 5px; }
+.chat-item-resposta p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+.chat-compose {
+  width: min(700px, 100%); margin-top: 22px; text-align: left; padding: 20px;
+  background: var(--card-bg); border: 1px solid var(--line); border-radius: var(--card-radius, 14px);
+  box-shadow: var(--shadow-sm);
+}
+.chat-type-toggle { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.chat-type-toggle button {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px;
+  padding: 10px 20px; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer;
+  transition: all .15s ease;
+}
+.chat-type-toggle button:hover { border-color: var(--green); color: var(--green); }
+.chat-type-toggle button.on { background: var(--green); border-color: var(--green); color: #fff; }
+.chat-textarea-wrap { position: relative; }
+.chat-textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+  background: var(--canvas-bg, transparent); color: inherit;
+  font: inherit; font-size: 14.5px; line-height: 1.55; resize: vertical; min-height: 130px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.chat-textarea:focus {
+  outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(57, 168, 117, 0.18);
+}
+.chat-textarea::placeholder { color: var(--muted-light, var(--muted)); }
+.chat-char-count { display: block; text-align: right; color: var(--muted); font-size: 11px; margin: 6px 2px 18px; }
+.chat-compose .error { margin-bottom: 12px; }
+
+.chat-notif-item { display: grid; gap: 4px; }
+.chat-notif-reply {
+  display: flex; flex-direction: column; gap: 10px; margin-top: 14px;
+  padding-top: 14px; border-top: 1px solid var(--line);
+}
+.chat-notif-reply textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+  background: var(--canvas-bg, transparent); color: inherit; font: inherit; min-height: 56px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.chat-notif-reply textarea:focus {
+  outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(57, 168, 117, 0.18);
+}
+.chat-notif-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;
+}
+.chat-notif-actions button, .chat-notif-actions select {
+  flex-shrink: 0; font-size: 13px; padding: 10px 16px; border-radius: 10px;
+}
+.chat-notif-actions select {
+  border: 1px solid var(--line); background: var(--card-bg); font-weight: 700; color: inherit; cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .chat-item { padding: 16px; }
+  .chat-compose { padding: 16px; }
+  .chat-type-toggle button { flex: 1 1 auto; text-align: center; padding: 10px 12px; }
+  .chat-notif-actions { flex-direction: column; }
+  .chat-notif-actions button, .chat-notif-actions select { width: 100%; }
 }

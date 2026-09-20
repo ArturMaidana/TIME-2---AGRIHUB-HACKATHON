@@ -15,6 +15,7 @@ export const ConfigModel = {
       coberturaAlvo: Number(row.cobertura_alvo),
       diasConsecutivosAmarelo: row.dias_consecutivos_amarelo,
       variacaoRelevantePercentual: Number(row.variacao_relevante_percentual),
+      usarIaGenerativa: row.usar_ia_generativa,
     };
   },
 };

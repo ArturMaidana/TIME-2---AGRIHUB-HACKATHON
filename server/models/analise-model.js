@@ -2,25 +2,35 @@ import { randomUUID } from 'node:crypto';
 import { queryAll, queryOne, execute } from '../config/database.js';
 
 export const AnaliseModel = {
-  async upsert({ unidadeId, setorId, turnoId, periodicidade, dataPeriodo, analise }) {
-    const now = new Date().toISOString();
-    await execute(`
-      INSERT INTO analises_periodicas(
-        id, unidade_id, setor_id, turno_id, periodicidade, data_periodo, versao_motor,
-        resumo, evidencias, correlacoes, nivel_atencao, indicadores_acompanhar, gerado_em
-      ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      ON CONFLICT (unidade_id, setor_id, turno_id, periodicidade, data_periodo)
-      DO UPDATE SET resumo = $8, evidencias = $9, correlacoes = $10, nivel_atencao = $11,
-        indicadores_acompanhar = $12, gerado_em = $13
-    `, [
-      randomUUID(), unidadeId, setorId, turnoId, periodicidade, dataPeriodo, analise.versaoMotor,
-      analise.resumo, JSON.stringify(analise.evidencias), JSON.stringify(analise.correlacoes),
-      analise.nivelAtencao, JSON.stringify(analise.indicadoresAcompanhar), now,
-    ]);
+  find({ unidadeId, setorId, turnoId, periodicidade, dataPeriodo }) {
     return queryOne(`
       SELECT * FROM analises_periodicas
       WHERE unidade_id = $1 AND setor_id = $2 AND turno_id = $3 AND periodicidade = $4 AND data_periodo = $5
     `, [unidadeId, setorId, turnoId, periodicidade, dataPeriodo]);
+  },
+
+  async upsert({
+    unidadeId, setorId, turnoId, periodicidade, dataPeriodo, analise,
+    resumoIA = null, hashEntrada = null, geradoPorIA = false,
+  }) {
+    const now = new Date().toISOString();
+    await execute(`
+      INSERT INTO analises_periodicas(
+        id, unidade_id, setor_id, turno_id, periodicidade, data_periodo, versao_motor,
+        resumo, evidencias, correlacoes, nivel_atencao, indicadores_acompanhar, gerado_em,
+        resumo_ia, hash_entrada, gerado_por_ia
+      ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      ON CONFLICT (unidade_id, setor_id, turno_id, periodicidade, data_periodo)
+      DO UPDATE SET resumo = $8, evidencias = $9, correlacoes = $10, nivel_atencao = $11,
+        indicadores_acompanhar = $12, gerado_em = $13, resumo_ia = $14, hash_entrada = $15,
+        gerado_por_ia = $16
+    `, [
+      randomUUID(), unidadeId, setorId, turnoId, periodicidade, dataPeriodo, analise.versaoMotor,
+      analise.resumo, JSON.stringify(analise.evidencias), JSON.stringify(analise.correlacoes),
+      analise.nivelAtencao, JSON.stringify(analise.indicadoresAcompanhar), now,
+      resumoIA, hashEntrada, geradoPorIA,
+    ]);
+    return AnaliseModel.find({ unidadeId, setorId, turnoId, periodicidade, dataPeriodo });
   },
 
   listByUnit({ unidadeId, periodicidade, setorIds }) {
