@@ -1,4 +1,17 @@
 services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://agrihub:agrihub@db:5432/agrihub
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run db:migrate && npm start"
+
   db:
     image: postgres:16-alpine
     environment:

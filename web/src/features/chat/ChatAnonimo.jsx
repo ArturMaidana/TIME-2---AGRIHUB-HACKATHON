@@ -153,6 +153,11 @@ export function ChatAnonimo({ auth, onLogout }) {
                   placeholder="Escreva aqui, com calma. Ninguém saberá quem enviou."
                   value={texto}
                   onChange={(event) => setTexto(event.target.value)}
+                  onFocus={(event) => {
+                    setTimeout(() => {
+                      event.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                  }}
                 />
                 <small className="chat-char-count">{texto.length}/2000</small>
               </div>

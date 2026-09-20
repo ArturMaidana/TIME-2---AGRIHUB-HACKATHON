@@ -77,14 +77,22 @@ export function Dashboard({ auth }) {
 
   useEffect(() => {
     if (!meta?.currentShiftId) return;
-    const turno = meta.currentShiftId;
-    Promise.all([
-      api(`/api/v1/supervisor/indices?turno=${turno}${sector !== 'all' ? `&setor=${sector}` : ''}`, {}, auth.token),
-      api('/api/v1/supervisor/analises?periodicidade=semanal', {}, auth.token),
-    ]).then(([indicesRes]) => api('/api/v1/supervisor/alertas?status=ABERTO', {}, auth.token).then((alertasRes) => {
-      setAnalytics({ indices: indicesRes.indices, alertas: alertasRes.alertas });
-      return api(`/api/dashboard?sector=${sector}&days=${days}`, {}, auth.token).then(setData);
-    }));
+    
+    const fetchDashboardData = () => {
+      const turno = meta.currentShiftId;
+      Promise.all([
+        api(`/api/v1/supervisor/indices?turno=${turno}${sector !== 'all' ? `&setor=${sector}` : ''}`, {}, auth.token),
+        api('/api/v1/supervisor/analises?periodicidade=semanal', {}, auth.token),
+      ]).then(([indicesRes]) => api('/api/v1/supervisor/alertas?status=ABERTO', {}, auth.token).then((alertasRes) => {
+        setAnalytics({ indices: indicesRes.indices, alertas: alertasRes.alertas });
+        return api(`/api/dashboard?sector=${sector}&days=${days}`, {}, auth.token).then(setData);
+      }));
+    };
+
+    fetchDashboardData();
+    const timer = setInterval(fetchDashboardData, 10000);
+
+    return () => clearInterval(timer);
   }, [auth.token, meta, sector, days]);
 
   if (!data || !meta) return <div className="loading">Cruzando indicadores…</div>;

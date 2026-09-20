@@ -65,11 +65,8 @@ export function Totem({ auth, onLogout }) {
   const [sent, setSent] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [exitToast, setExitToast] = useState(false);
-  const [isPortrait, setIsPortrait] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia('(orientation: portrait)').matches;
-  });
 
+  const questionsRef = useRef(null);
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef(null);
 
@@ -122,17 +119,18 @@ export function Totem({ auth, onLogout }) {
     };
   }, [isFullscreen]);
 
-  // Detecta mudança de orientação (vertical vs horizontal)
-  useEffect(() => {
-    const mq = window.matchMedia('(orientation: portrait)');
-    const onChange = (e) => setIsPortrait(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
+
 
   useEffect(() => {
     api('/api/totem', {}, auth.token).then(setData);
   }, [auth.token]);
+
+  function handleSectorSelect(item) {
+    setSector(item);
+    setTimeout(() => {
+      questionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }
 
   const exitFullscreen = () => {
     const doc = document;
@@ -197,38 +195,7 @@ export function Totem({ auth, onLogout }) {
     }
   }
 
-  // Resposta em modo horizontal com transição animada fluida
-  function answerStepHorizontal(score) {
-    if (isTransitioning) return;
-    setSelectedScore(score);
-    const nextAnswers = { ...answers, [questions[step].key]: score };
-    setAnswers(nextAnswers);
 
-    setIsTransitioning(true);
-    setTransitionDir('next');
-
-    setTimeout(() => {
-      if (step < 2) {
-        const nextStep = step + 1;
-        setStep(nextStep);
-        setSelectedScore(nextAnswers[questions[nextStep]?.key] || null);
-      } else {
-        submitResponses(sector, nextAnswers);
-      }
-      setIsTransitioning(false);
-    }, 280);
-  }
-
-  function goToStepHorizontal(targetStep) {
-    if (isTransitioning || targetStep === step) return;
-    setTransitionDir(targetStep > step ? 'next' : 'prev');
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setStep(targetStep);
-      setSelectedScore(answers[questions[targetStep]?.key] || null);
-      setIsTransitioning(false);
-    }, 200);
-  }
 
   if (!data) return <div className="loading">Preparando o totem…</div>;
 
@@ -243,7 +210,7 @@ export function Totem({ auth, onLogout }) {
     + (answers.STRESS ? 1 : 0);
 
   return (
-    <main className={`totem ${isFullscreen ? 'is-fullscreen' : ''} ${isPortrait ? 'is-portrait' : 'is-landscape'}`}>
+    <main className={`totem ${isFullscreen ? 'is-fullscreen' : ''}`}>
       {/* Toast informativo ao sair de tela cheia por 6 cliques */}
       {exitToast && (
         <div className="totem-exit-toast">
@@ -292,9 +259,9 @@ export function Totem({ auth, onLogout }) {
           <h1>Obrigado por responder!</h1>
           <p>Suas respostas foram registradas de forma 100% anônima e somadas ao pulso do setor.</p>
         </section>
-      ) : isPortrait ? (
+      ) : (
         /* =====================================================================
-           MODO VERTICAL: TODOS OS PASSOS NA MESMA TELA
+           TODOS OS PASSOS NA MESMA TELA
            ===================================================================== */
         <div className="totem-vertical-scroll">
           <div className="totem-vertical-header-title">
@@ -338,22 +305,18 @@ export function Totem({ auth, onLogout }) {
                           <div
                             key={item.id}
                             className={`totem-sector-card ${isSelected ? 'is-selected' : ''}`}
-                            onClick={() => setSector(item)}
+                            onClick={() => handleSectorSelect(item)}
                             role="button"
                             tabIndex={0}
                           >
                             <div className="totem-sector-main">
                               <div className={`totem-sector-icon-box ${tone}`}>
-                                <SecIcon size={22} />
+                                <img src="/funciononario.png" alt="Ícone de funcionário" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '2px' }} />
                               </div>
                               <div className="totem-sector-info">
                                 <strong>{item.name}</strong>
                                 <span className={tone}>{group.label}</span>
                               </div>
-                            </div>
-
-                            <div className="totem-sector-check">
-                              <Check size={16} strokeWidth={3} />
                             </div>
                           </div>
                         );
@@ -370,7 +333,11 @@ export function Totem({ auth, onLogout }) {
             const currentScore = answers[q.key];
 
             return (
-              <section className="totem-section-box" key={q.key}>
+              <section 
+                className="totem-section-box" 
+                key={q.key} 
+                ref={q.key === 'ENERGY' ? questionsRef : null}
+              >
                 <div className="totem-section-header">
                   <div>
                     <h3>{q.shortTitle}</h3>
@@ -428,118 +395,7 @@ export function Totem({ auth, onLogout }) {
             </small>
           </div>
         </div>
-      ) : (
-        /* =====================================================================
-           MODO HORIZONTAL: UM PASSO POR VEZ (WIZARD)
-           ===================================================================== */
-        !sector ? (
-          /* Passo 1 Horizontal: Selecionar Setor */
-          <section className="totem-body">
-            <span className="step">PASSO 1 DE 4 • SELEÇÃO DE SETOR</span>
-            <h1>Em qual setor você trabalha?</h1>
-            <p>Toque no seu setor para começar. Check-in 100% anônimo.</p>
 
-            <div className="totem-sector-groups horizontal">
-              {groupSectorsForDisplay(data.sectors).map((group) => {
-                const GroupIcon = group.icon;
-                const tone = group.key === 'QUENTE' ? 'hot' : group.key === 'FRIA' ? 'cold' : 'admin';
-
-                return (
-                  <div key={group.key} className="totem-category-block">
-                    <div className="totem-category-label">
-                      <GroupIcon size={14} style={{ color: group.color }} />
-                      <span>{group.label}</span>
-                    </div>
-
-                    <div className="totem-sector-grid">
-                      {group.items.map((item) => {
-                        const SecIcon = getSectorIcon(item.name, item.category);
-
-                        return (
-                          <div
-                            key={item.id}
-                            className="totem-sector-card"
-                            onClick={() => {
-                              setSector(item);
-                              setStep(0);
-                            }}
-                            role="button"
-                            tabIndex={0}
-                          >
-                            <div className="totem-sector-main">
-                              <div className={`totem-sector-icon-box ${tone}`}>
-                                <SecIcon size={22} />
-                              </div>
-                              <div className="totem-sector-info">
-                                <strong>{item.name}</strong>
-                                <span className={tone}>{group.label}</span>
-                              </div>
-                            </div>
-                            <ChevronRight size={18} className="totem-sector-chevron" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <small className="totem-anon-notice">
-              <ShieldCheck size={14} /> Pesquisa 100% anônima • Nenhuma identificação pessoal é coletada
-            </small>
-          </section>
-        ) : (
-          /* Passos 2, 3, 4 Horizontal: Indicadores um por vez */
-          <section className="totem-body">
-            <div className="totem-wizard-nav">
-              <span className="step">
-                PERGUNTA {step + 1} DE 3 • {sector.name}
-              </span>
-            </div>
-
-            <div className="question-dots" role="tablist" aria-label="Progresso das perguntas">
-              {questions.map((q, idx) => (
-                <button
-                  key={q.key}
-                  type="button"
-                  className={`question-dot ${step === idx ? 'current' : ''} ${step >= idx ? 'on' : ''}`}
-                  onClick={() => goToStepHorizontal(idx)}
-                  title={`Pergunta ${idx + 1}: ${q.shortTitle}`}
-                  aria-label={`Ir para pergunta ${idx + 1}`}
-                />
-              ))}
-            </div>
-
-            <div
-              key={step}
-              className={`totem-question-step ${isTransitioning ? `anim-out-${transitionDir}` : 'anim-in'}`}
-            >
-              <h1>{questions[step].title}</h1>
-              <p>Toque na opção que melhor representa você agora.</p>
-
-              <div className="moods">
-                {moods.map((m) => {
-                  const isSelected = selectedScore === m.score || answers[questions[step].key] === m.score;
-                  return (
-                    <button
-                      type="button"
-                      key={m.score}
-                      className={`mood-btn ${isSelected ? 'is-selected' : ''}`}
-                      onClick={() => answerStepHorizontal(m.score)}
-                    >
-                      <span className="mood-emoji">{m.emoji}</span>
-                      <b className="mood-score">{m.score}</b>
-                      <small className="mood-label">
-                        {m.score === 1 ? questions[step].low : m.score === 5 ? questions[step].high : m.label}
-                      </small>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )
       )}
 
       {/* Footer do Totem (apenas quando não em tela cheia) */}
