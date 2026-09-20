@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { pool, queryAll } from '../config/database.js';
+import { dateKey, dateKeyOffset } from '../utils/date.js';
 
 export const ResponseModel = {
   async incrementAnswers({ unitId, sectorId, shiftId, date, answers, idempotencyKey }) {
@@ -33,16 +34,17 @@ export const ResponseModel = {
 
   getSeries({ unitId, sectorId, days }) {
     const scoped = sectorId && sectorId !== 'all';
+    const since = dateKeyOffset(days - 1);
     return queryAll(`
       SELECT response_date AS date, metric,
         ROUND(SUM(score * quantity)::numeric / SUM(quantity), 2) AS average,
         SUM(quantity) AS responses
       FROM responses
-      WHERE unit_id = $1 AND response_date >= to_char(CURRENT_DATE - $2::int, 'YYYY-MM-DD')
+      WHERE unit_id = $1 AND response_date >= $2
         ${scoped ? 'AND sector_id = $3' : ''}
       GROUP BY response_date, metric
       ORDER BY response_date
-    `, scoped ? [unitId, days - 1, sectorId] : [unitId, days - 1]);
+    `, scoped ? [unitId, since, sectorId] : [unitId, since]);
   },
 
   getTodayBySector(unitId) {
@@ -51,24 +53,25 @@ export const ResponseModel = {
         ROUND(SUM(r.score * r.quantity)::numeric / NULLIF(SUM(r.quantity), 0), 2) AS average,
         SUM(r.quantity) AS responses
       FROM sectors s
-      LEFT JOIN responses r ON r.sector_id = s.id AND r.response_date = to_char(CURRENT_DATE, 'YYYY-MM-DD')
+      LEFT JOIN responses r ON r.sector_id = s.id AND r.response_date = $2
       WHERE s.unit_id = $1
       GROUP BY s.id, r.metric
       ORDER BY s.name
-    `, [unitId]);
+    `, [unitId, dateKey()]);
   },
 
   getMonthlyBySector(unitId) {
+    const since = dateKeyOffset(29);
     return queryAll(`
       SELECT s.id, s.name, s.category, r.metric,
         ROUND(SUM(r.score * r.quantity)::numeric / NULLIF(SUM(r.quantity), 0), 2) AS average,
         SUM(r.quantity) AS responses
       FROM sectors s
       LEFT JOIN responses r ON r.sector_id = s.id
-        AND r.response_date >= to_char(CURRENT_DATE - 29, 'YYYY-MM-DD')
+        AND r.response_date >= $2
       WHERE s.unit_id = $1
       GROUP BY s.id, s.name, s.category, r.metric
       ORDER BY s.category DESC, s.name
-    `, [unitId]);
+    `, [unitId, since]);
   },
 };

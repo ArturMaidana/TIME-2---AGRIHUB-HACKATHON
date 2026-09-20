@@ -12,8 +12,8 @@ export function SectorIndicators({ auth }) {
   useEffect(() => { api('/api/dashboard?days=30', {}, auth.token).then(setData); }, [auth.token]);
   useEffect(() => { api('/api/meta', {}, auth.token).then(setMeta); }, [auth.token]);
   useEffect(() => {
-    if (!meta?.shifts?.length) return;
-    api(`/api/v1/supervisor/indices?turno=${meta.shifts[0].id}`, {}, auth.token).then((res) => setIndices(res.indices));
+    if (!meta?.currentShiftId) return;
+    api(`/api/v1/supervisor/indices?turno=${meta.currentShiftId}`, {}, auth.token).then((res) => setIndices(res.indices));
   }, [auth.token, meta]);
   if (!data || !meta) return <div className="loading">Carregando indicadores…</div>;
 

@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { IndiceSetorService } from '../server/services/indice-setor-service.js';
 import { IndiceSetorModel } from '../server/models/indice-setor-model.js';
+import { dateKey } from '../server/utils/date.js';
 
 test('calcula e armazena o índice diário de um setor com amostra do seed', async () => {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dateKey();
   const row = await IndiceSetorService.calcularEArmazenar({
     unidadeId: 'u1', setorId: 's1', turnoId: 't1', tipoPeriodo: 'DIARIO', dataPeriodo: hoje,
   });
@@ -18,7 +19,7 @@ test('calcula e armazena o índice diário de um setor com amostra do seed', asy
 });
 
 test('recalcular o mesmo escopo faz upsert (não duplica linha)', async () => {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = dateKey();
   await IndiceSetorService.calcularEArmazenar({
     unidadeId: 'u1', setorId: 's2', turnoId: 't1', tipoPeriodo: 'DIARIO', dataPeriodo: hoje,
   });

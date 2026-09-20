@@ -17,9 +17,9 @@ test('serviço do totem retorna setores padronizados e turno automático', async
   assert.deepEqual(new Set(context.sectors.map((sector) => sector.category)), new Set(['QUENTE', 'FRIA']));
 });
 
-test('serviço do dashboard entrega as três camadas de análise', async () => {
+test('serviço do dashboard entrega as três camadas de análise mesmo sem histórico', async () => {
   const dashboard = await DashboardService.get({ unitId: 'u1', days: 30 });
-  assert.ok(dashboard.series.length > 0);
+  assert.ok(Array.isArray(dashboard.series));
   assert.equal(new Set(dashboard.sectorSummary.map((row) => row.id)).size, 10);
   assert.ok(Array.isArray(dashboard.analysis.actions));
   assert.ok(['BAIXA', 'MODERADA', 'ALTA'].includes(dashboard.analysis.attention));

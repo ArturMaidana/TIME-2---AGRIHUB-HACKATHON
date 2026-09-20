@@ -49,14 +49,22 @@ A saúde do backend pode ser verificada em `http://localhost:3001/api/health`.
 
 O MVP usa PostgreSQL, com chaves estrangeiras, restrições de domínio e migrations
 versionadas em `server/database/migrations/`. Na primeira execução, o banco recebe
-dados demonstrativos dos 10 setores, três turnos, 35 dias de respostas, cinco semanas
-de indicadores do RH, e configuração/headcount padrão para o motor de índice.
+**apenas cadastro mínimo**: 1 unidade, 10 setores, 3 turnos, 1 totem, supervisor e RH
+demonstrativos, configuração do índice e headcount esperado (5 por setor/turno).
+Nenhuma resposta de totem, indicador de RH, índice, alerta ou plano de ação é
+pré-carregado — essas tabelas só recebem linhas a partir de uso real do sistema (ver
+[design](./docs/superpowers/specs/2026-09-19-banco-minimo-fluxo-real-design.md)).
 
 ```bash
 npm run db:migrate  # aplica as migrations pendentes
 npm run db:status    # exibe a conexão utilizada e a quantidade de registros
-npm run db:rebuild   # trunca, recria a estrutura e reaplica os dados fake
+npm run db:rebuild   # PROCEDIMENTO DE RESET: trunca tudo e recria só o cadastro mínimo
 ```
+
+**`npm run db:rebuild` é o procedimento padrão de reset.** Sempre que for necessário
+"limpar o banco" — voltar ao estado inicial, sem resposta nenhuma acumulada — é esse o
+comando, sem precisar de nada além dele. É destrutivo: apaga toda resposta, alerta,
+análise e plano de ação existentes antes de repopular o cadastro mínimo.
 
 A conexão é definida por `DATABASE_URL`/`DATABASE_SSL`, conforme o `.env.example`
 (padrão: Postgres local do `docker-compose.yml`, porta 5433 — deslocada de 5432 para

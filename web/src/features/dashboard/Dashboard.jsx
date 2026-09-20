@@ -19,8 +19,8 @@ export function Dashboard({ auth }) {
   useEffect(() => { api(`/api/dashboard?sector=${sector}&days=${days}`, {}, auth.token).then(setData); }, [auth.token, sector, days]);
 
   useEffect(() => {
-    if (!meta?.shifts?.length) return;
-    const turno = meta.shifts[0].id;
+    if (!meta?.currentShiftId) return;
+    const turno = meta.currentShiftId;
     Promise.all([
       api(`/api/v1/supervisor/indices?turno=${turno}${sector !== 'all' ? `&setor=${sector}` : ''}`, {}, auth.token),
       api('/api/v1/supervisor/analises?periodicidade=semanal', {}, auth.token),
