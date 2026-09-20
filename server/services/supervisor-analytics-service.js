@@ -10,6 +10,9 @@ import { AlertaModel } from '../models/alerta-model.js';
 import { AnaliseModel } from '../models/analise-model.js';
 import { PlanoAcaoModel } from '../models/plano-acao-model.js';
 import { HrIndicatorModel } from '../models/hr-indicator-model.js';
+import { ReclamacaoModel } from '../models/reclamacao-model.js';
+import { gerarResumoComIA } from './groq-client.js';
+import { hashObjetoEstavel } from '../utils/hash.js';
 
 function periodoAnterior(tipoPeriodo, dataPeriodo) {
   const data = new Date(`${dataPeriodo}T00:00:00Z`);
@@ -17,6 +20,47 @@ function periodoAnterior(tipoPeriodo, dataPeriodo) {
   else if (tipoPeriodo === 'SEMANAL') data.setUTCDate(data.getUTCDate() - 7);
   else data.setUTCMonth(data.getUTCMonth() - 1);
   return data.toISOString().slice(0, 10);
+}
+
+// Só chama a IA quando: (1) o flag está ligado, (2) já há amostra suficiente pra calcular
+// o índice, e (3) os dados de entrada mudaram desde a última geração (via hash) — ou seja,
+// só "quando surgirem informações suficientes para uma nova análise". Em qualquer outro
+// caso (flag desligado, falha da API, sem amostra) o texto cai de volta pro resumo
+// determinístico, que já existe independente disso.
+async function resumoComCache({
+  unidadeId, setorId, turnoId, periodicidade, dataPeriodo, config, setor, turno, atual,
+  comparacao, alertasAbertos, hr, nivelAtencao,
+}) {
+  if (!config.usarIaGenerativa || !atual?.calculavel) {
+    return { resumoIA: null, hashEntrada: null, geradoPorIA: false };
+  }
+
+  const hashEntrada = hashObjetoEstavel({
+    score: atual.score, status: atual.status, nivelAtencao,
+    alertas: alertasAbertos.map((alerta) => alerta.regra).sort(),
+    faltas: hr.faltas, afastamentos: hr.afastamentos,
+    tendencia: comparacao.comparavel ? comparacao.tendencia : null,
+  });
+
+  const existente = await AnaliseModel.find({ unidadeId, setorId, turnoId, periodicidade, dataPeriodo });
+  if (existente?.gerado_por_ia && existente.hash_entrada === hashEntrada) {
+    return { resumoIA: existente.resumo_ia, hashEntrada, geradoPorIA: true };
+  }
+
+  try {
+    const resumoIA = await gerarResumoComIA({
+      setor: setor.name, turno: turno.name, indiceAtencao: atual.score, statusIndice: atual.status,
+      nivelAtencao, faltasNoPeriodo: hr.faltas, afastamentosNoPeriodo: hr.afastamentos,
+      alertasAbertos: alertasAbertos.map((alerta) => alerta.motivo),
+      tendenciaFrenteAoPeriodoAnterior: comparacao.comparavel ? comparacao.tendencia : null,
+    });
+    return { resumoIA, hashEntrada, geradoPorIA: true };
+  } catch (error) {
+    console.warn(`[IA] Falha ao gerar resumo para ${setor.name}/${turno.name}: ${error.message}`);
+    return {
+      resumoIA: existente?.resumo_ia ?? null, hashEntrada, geradoPorIA: Boolean(existente?.gerado_por_ia),
+    };
+  }
 }
 
 export const SupervisorAnalyticsService = {
@@ -85,7 +129,15 @@ export const SupervisorAnalyticsService = {
       hr,
     });
 
-    const stored = await AnaliseModel.upsert({ unidadeId, setorId, turnoId, periodicidade, dataPeriodo, analise });
+    const atual = historico[0];
+    const { resumoIA, hashEntrada, geradoPorIA } = await resumoComCache({
+      unidadeId, setorId, turnoId, periodicidade, dataPeriodo, config, setor, turno, atual, comparacao,
+      alertasAbertos, hr, nivelAtencao: analise.nivelAtencao,
+    });
+
+    const stored = await AnaliseModel.upsert({
+      unidadeId, setorId, turnoId, periodicidade, dataPeriodo, analise, resumoIA, hashEntrada, geradoPorIA,
+    });
     await PlanoAcaoModel.createFromAnalise({
       analiseId: stored.id, unidadeId, setorId, turnoId, acoes: analise.acoesSugeridas,
     });
@@ -141,5 +193,16 @@ export const SupervisorAnalyticsService = {
 
   async historico({ unidadeId, setorId, turnoId, tipoPeriodo, limit }) {
     return IndiceSetorModel.listHistory({ unidadeId, setorId, turnoId, tipoPeriodo, limit });
+  },
+
+  async notificacoes({ unidadeId, setorIds, status }) {
+    return ReclamacaoModel.listByUnit({ unidadeId, setorIds, status });
+  },
+
+  async atualizarNotificacao({ unidadeId, id, status, resposta }) {
+    const validStatuses = ['ABERTO', 'EM_ANALISE', 'TRATADO', 'DESCARTADO'];
+    if (!validStatuses.includes(status)) return { ok: false, error: 'Status inválido' };
+    const updated = await ReclamacaoModel.updateStatus({ id, unidadeId, status, resposta });
+    return updated ? { ok: true } : { ok: false, error: 'Notificação não encontrada' };
   },
 };

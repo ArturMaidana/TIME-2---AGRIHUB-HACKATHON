@@ -12,7 +12,7 @@ test('serviço de autenticação separa supervisor e totem', async () => {
 
 test('serviço do totem retorna setores padronizados e turno automático', async () => {
   const context = await TotemService.getContext('u1');
-  assert.equal(context.sectors.length, 10);
+  assert.equal(context.sectors.length, 11);
   assert.ok(context.shift.id);
   assert.deepEqual(new Set(context.sectors.map((sector) => sector.category)), new Set(['QUENTE', 'FRIA']));
 });
@@ -20,7 +20,7 @@ test('serviço do totem retorna setores padronizados e turno automático', async
 test('serviço do dashboard entrega as três camadas de análise mesmo sem histórico', async () => {
   const dashboard = await DashboardService.get({ unitId: 'u1', days: 30 });
   assert.ok(Array.isArray(dashboard.series));
-  assert.equal(new Set(dashboard.sectorSummary.map((row) => row.id)).size, 10);
+  assert.equal(new Set(dashboard.sectorSummary.map((row) => row.id)).size, 11);
   assert.ok(Array.isArray(dashboard.analysis.actions));
   assert.ok(['BAIXA', 'MODERADA', 'ALTA'].includes(dashboard.analysis.attention));
 });

@@ -29,7 +29,7 @@ test('aplica a migration base e registra a versão', async () => {
     assert.ok(tables.includes('units'));
     assert.ok(tables.includes('responses'));
     const versions = (await pool.query('SELECT version FROM schema_migrations ORDER BY version')).rows;
-    assert.deepEqual(versions, [{ version: 1 }, { version: 2 }]);
+    assert.deepEqual(versions, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }]);
   });
 });
 
@@ -38,7 +38,7 @@ test('roda a migration duas vezes sem erro (idempotente)', async () => {
     await runMigrations(pool);
     await runMigrations(pool);
     const versions = (await pool.query('SELECT version FROM schema_migrations')).rows;
-    assert.equal(versions.length, 2);
+    assert.equal(versions.length, 4);
   });
 });
 
@@ -46,12 +46,18 @@ test('reverte a última migration', async () => {
   await withThrowawayDatabase(async (pool) => {
     await runMigrations(pool);
     const result = await rollbackLastMigration(pool);
-    assert.equal(result.version, 2);
+    assert.equal(result.version, 4);
+    const columns = (await pool.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'configuracoes_indicadores'
+    `)).rows.map((row) => row.column_name);
+    assert.ok(!columns.includes('usar_ia_generativa'));
     const tables = (await pool.query(`
       SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
     `)).rows.map((row) => row.table_name);
-    assert.ok(!tables.includes('alertas'));
+    assert.ok(tables.includes('alertas'));
     assert.ok(tables.includes('units'));
+    assert.ok(tables.includes('reclamacoes_sugestoes'));
   });
 });
 
@@ -68,6 +74,36 @@ test('aplica a migration de analytics após a baseline', async () => {
       assert.ok(tables.includes(table), `esperava a tabela ${table}`);
     }
     const versions = (await pool.query('SELECT version FROM schema_migrations ORDER BY version')).rows;
-    assert.deepEqual(versions, [{ version: 1 }, { version: 2 }]);
+    assert.deepEqual(versions, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }]);
+  });
+});
+
+test('aplica a migration do chat anônimo (papel FUNCIONARIO + reclamacoes_sugestoes)', async () => {
+  await withThrowawayDatabase(async (pool) => {
+    await runMigrations(pool);
+    const tables = (await pool.query(`
+      SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
+    `)).rows.map((row) => row.table_name);
+    assert.ok(tables.includes('reclamacoes_sugestoes'));
+    const constraint = (await pool.query(`
+      SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'users_role_check'
+    `)).rows[0];
+    assert.match(constraint.def, /FUNCIONARIO/);
+  });
+});
+
+test('aplica a migration da IA generativa (flag + cache de resumo)', async () => {
+  await withThrowawayDatabase(async (pool) => {
+    await runMigrations(pool);
+    const configColumns = (await pool.query(`
+      SELECT column_name FROM information_schema.columns WHERE table_name = 'configuracoes_indicadores'
+    `)).rows.map((row) => row.column_name);
+    assert.ok(configColumns.includes('usar_ia_generativa'));
+    const analiseColumns = (await pool.query(`
+      SELECT column_name FROM information_schema.columns WHERE table_name = 'analises_periodicas'
+    `)).rows.map((row) => row.column_name);
+    assert.ok(analiseColumns.includes('resumo_ia'));
+    assert.ok(analiseColumns.includes('hash_entrada'));
+    assert.ok(analiseColumns.includes('gerado_por_ia'));
   });
 });

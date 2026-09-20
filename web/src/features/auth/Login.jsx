@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { api } from '../../api/client.js';
 import { Brand } from '../../components/Brand.jsx';
 
-const ROLES = ['SUPERVISOR', 'RH', 'TOTEM'];
+const ROLES = ['SUPERVISOR', 'RH', 'TOTEM', 'FUNCIONARIO'];
 
 const ROLE_DETAILS = {
   SUPERVISOR: {
@@ -29,6 +29,14 @@ const ROLE_DETAILS = {
     badge: 'Nenhum dado pessoal ou identificação é coletado',
     subtitle: 'Terminal de quiosque para registro anônimo de sensação térmica e desgaste.',
     defaultCode: 'TOTEM-01',
+  },
+  FUNCIONARIO: {
+    overline: 'FALE COM O SUPERVISOR, SEM SE IDENTIFICAR',
+    title: <>Sua voz importa.<br />Sem nome, sem medo.</>,
+    description: 'Reclamações e sugestões chegam direto ao supervisor do seu setor — sem nome, matrícula ou qualquer identificação.',
+    badge: 'Código anônimo, sem senha — feito para acesso fácil',
+    subtitle: 'Deixe em branco para criar um código novo, ou digite o seu (ex: anonimo_3) para ver respostas.',
+    defaultCode: '',
   },
 };
 
@@ -93,7 +101,7 @@ export function Login({ onAuthenticated }) {
                 onClick={() => changeType(role)}
                 key={role}
               >
-                {role === 'SUPERVISOR' ? 'Supervisor' : role === 'RH' ? 'RH' : 'Totem'}
+                {role === 'SUPERVISOR' ? 'Supervisor' : role === 'RH' ? 'RH' : role === 'TOTEM' ? 'Totem' : 'Funcionário'}
               </button>
             ))}
           </div>
@@ -110,7 +118,7 @@ export function Login({ onAuthenticated }) {
 
           {error && <div className="error">{error}</div>}
           <button className="primary">Entrar <ChevronRight /></button>
-          <small>Credenciais demonstrativas já preenchidas</small>
+          <small>{type === 'FUNCIONARIO' ? 'Sem senha — em branco cria um código novo' : 'Credenciais demonstrativas já preenchidas'}</small>
         </form>
       </section>
     </main>

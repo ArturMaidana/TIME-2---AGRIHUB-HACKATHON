@@ -24,6 +24,10 @@ O repositório contém um MVP demonstrável com:
   integrada com plano de ação editável;
 - portal exclusivo do RH para faltas e afastamentos agregados;
 - motor determinístico de análise semanal/mensal com evidências e correlações;
+- resumo opcional gerado por IA (Groq, grátis) por cima do motor determinístico — nunca
+  substitui os números/alertas, só redige o texto; liga/desliga por flag no banco;
+- chat anônimo do funcionário (reclamações/sugestões por pseudônimo auto-gerado, sem
+  senha) com retorno do supervisor, visível na área de Notificações;
 - backend Node.js assíncrono com persistência PostgreSQL.
 
 ## Executar
@@ -42,8 +46,29 @@ Abra `http://localhost:3001` e use uma das credenciais:
 - Supervisor: `SUPERVISOR`
 - RH: `RH2026`
 - Totem: `TOTEM-01`
+- Funcionário (chat anônimo): deixe o código em branco para criar um pseudônimo novo
+  (`anonimo_1`, `anonimo_2`, ...); sem senha, mesmo padrão simples dos demais papéis.
 
 A saúde do backend pode ser verificada em `http://localhost:3001/api/health`.
+
+### IA generativa opcional (resumo das análises)
+
+O motor de análise (`src/domain/analise-planos.js`) é 100% determinístico e sempre
+funciona sozinho, com ou sem IA. Se você quiser que o texto do resumo (as caixas
+"Cruzamento da IA" no dashboard e na análise mensal) seja escrito por um LLM em vez do
+texto padrão do motor, para setores/turnos com amostra suficiente:
+
+1. Copie `.env.example` para `.env` e preencha `GROQ_API_KEY` com uma chave grátis de
+   [console.groq.com](https://console.groq.com/keys).
+2. O flag `usar_ia_generativa` na tabela `configuracoes_indicadores` já vem `true` por
+   padrão. Para desligar (voltar 100% ao texto determinístico, por exemplo pra
+   apresentação, sem depender de internet/chave): `npm run ia:toggle -- off`. Pra religar:
+   `npm run ia:toggle -- on`.
+
+O resumo com IA é cacheado por setor/turno/período (`analises_periodicas.resumo_ia`) e só
+é regerado quando os dados de entrada mudam (novo índice, alerta ou dado de RH) — a
+chamada à Groq não acontece a cada carregamento de página. Qualquer falha da API (rede,
+limite de uso) cai de volta pro resumo determinístico sem quebrar a tela.
 
 ## Banco de dados
 

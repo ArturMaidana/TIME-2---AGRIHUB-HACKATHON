@@ -7,6 +7,7 @@ export const STANDARD_SECTORS = [
   ['s5', 'Abate segunda fase', 'QUENTE'], ['s6', 'Miúdos', 'QUENTE'],
   ['s7', 'Bucharia limpa', 'QUENTE'], ['s8', 'Bucharia suja', 'QUENTE'],
   ['s9', 'Gracharia', 'QUENTE'], ['s10', 'Expedição com osso', 'FRIA'],
+  ['s11', 'Administrativo/Comercial', 'FRIA'],
 ];
 
 const SHIFTS = [

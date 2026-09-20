@@ -4,18 +4,15 @@ import {
   ChevronRight,
   Clock3,
   Factory,
-  Flame,
   LogOut,
   Maximize,
-  Package,
   ShieldCheck,
-  Snowflake,
   Sparkles,
-  Truck,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/client.js';
 import { Brand } from '../../components/Brand.jsx';
+import { getSectorIcon, groupSectorsForDisplay } from '../../utils/sector-groups.js';
 
 function generateId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -42,28 +39,20 @@ const questions = [
   },
   {
     key: 'PHYSICAL',
-    title: 'Como está seu nível de dor ou cansaço físico?',
-    shortTitle: '3. Dor / Cansaço Físico',
+    title: 'Como está seu nível de cansaço físico hoje?',
+    shortTitle: '3. Cansaço Físico',
     low: 'Nenhum',
     high: 'Muito intenso',
   },
   {
     key: 'STRESS',
-    title: 'Como está seu nível de ansiedade ou estresse?',
-    shortTitle: '4. Ansiedade / Estresse',
+    title: 'Como está seu nível de estresse hoje?',
+    shortTitle: '4. Nível de Estresse',
     low: 'Nenhum',
     high: 'Muito intenso',
   },
 ];
 
-function getSectorIcon(sectorName = '', category = '') {
-  const lower = sectorName.toLowerCase();
-  if (lower.includes('embalagem')) return Package;
-  if (lower.includes('expedição') || lower.includes('expedicao')) return Truck;
-  if (category === 'QUENTE' || lower.includes('abate')) return Flame;
-  if (category === 'FRIA') return Snowflake;
-  return Factory;
-}
 
 export function Totem({ auth, onLogout }) {
   const [data, setData] = useState();
@@ -327,28 +316,21 @@ export function Totem({ auth, onLogout }) {
             </div>
 
             <div className="totem-sector-groups">
-              {['QUENTE', 'FRIA'].map((category) => {
-                const categorySectors = data.sectors.filter((item) => item.category === category);
-                if (!categorySectors.length) return null;
+              {groupSectorsForDisplay(data.sectors).map((group) => {
+                const GroupIcon = group.icon;
+                const tone = group.key === 'QUENTE' ? 'hot' : group.key === 'FRIA' ? 'cold' : 'admin';
+                const detail = group.key === 'QUENTE' ? ' (Processamento Inicial)'
+                  : group.key === 'FRIA' ? ' (Climatizada NR-36 / Expedição)' : '';
 
                 return (
-                  <div key={category} className="totem-category-block">
+                  <div key={group.key} className="totem-category-block">
                     <div className="totem-category-label">
-                      {category === 'QUENTE' ? (
-                        <>
-                          <Flame size={14} style={{ color: '#d96324' }} />
-                          <span>Área Quente (Processamento Inicial)</span>
-                        </>
-                      ) : (
-                        <>
-                          <Snowflake size={14} style={{ color: '#2b7bc4' }} />
-                          <span>Área Fria (Climatizada NR-36 / Expedição)</span>
-                        </>
-                      )}
+                      <GroupIcon size={14} style={{ color: group.color }} />
+                      <span>{group.label}{detail}</span>
                     </div>
 
                     <div className="totem-sector-grid">
-                      {categorySectors.map((item) => {
+                      {group.items.map((item) => {
                         const isSelected = sector?.id === item.id;
                         const SecIcon = getSectorIcon(item.name, item.category);
 
@@ -361,14 +343,12 @@ export function Totem({ auth, onLogout }) {
                             tabIndex={0}
                           >
                             <div className="totem-sector-main">
-                              <div className={`totem-sector-icon-box ${item.category === 'QUENTE' ? 'hot' : 'cold'}`}>
+                              <div className={`totem-sector-icon-box ${tone}`}>
                                 <SecIcon size={22} />
                               </div>
                               <div className="totem-sector-info">
                                 <strong>{item.name}</strong>
-                                <span className={item.category === 'QUENTE' ? 'hot' : 'cold'}>
-                                  {item.category === 'QUENTE' ? 'Área Quente' : 'Área Fria'}
-                                </span>
+                                <span className={tone}>{group.label}</span>
                               </div>
                             </div>
 
@@ -460,28 +440,19 @@ export function Totem({ auth, onLogout }) {
             <p>Toque no seu setor para começar. Check-in 100% anônimo.</p>
 
             <div className="totem-sector-groups horizontal">
-              {['QUENTE', 'FRIA'].map((category) => {
-                const categorySectors = data.sectors.filter((item) => item.category === category);
-                if (!categorySectors.length) return null;
+              {groupSectorsForDisplay(data.sectors).map((group) => {
+                const GroupIcon = group.icon;
+                const tone = group.key === 'QUENTE' ? 'hot' : group.key === 'FRIA' ? 'cold' : 'admin';
 
                 return (
-                  <div key={category} className="totem-category-block">
+                  <div key={group.key} className="totem-category-block">
                     <div className="totem-category-label">
-                      {category === 'QUENTE' ? (
-                        <>
-                          <Flame size={14} style={{ color: '#d96324' }} />
-                          <span>Área Quente</span>
-                        </>
-                      ) : (
-                        <>
-                          <Snowflake size={14} style={{ color: '#2b7bc4' }} />
-                          <span>Área Fria</span>
-                        </>
-                      )}
+                      <GroupIcon size={14} style={{ color: group.color }} />
+                      <span>{group.label}</span>
                     </div>
 
                     <div className="totem-sector-grid">
-                      {categorySectors.map((item) => {
+                      {group.items.map((item) => {
                         const SecIcon = getSectorIcon(item.name, item.category);
 
                         return (
@@ -496,14 +467,12 @@ export function Totem({ auth, onLogout }) {
                             tabIndex={0}
                           >
                             <div className="totem-sector-main">
-                              <div className={`totem-sector-icon-box ${item.category === 'QUENTE' ? 'hot' : 'cold'}`}>
+                              <div className={`totem-sector-icon-box ${tone}`}>
                                 <SecIcon size={22} />
                               </div>
                               <div className="totem-sector-info">
                                 <strong>{item.name}</strong>
-                                <span className={item.category === 'QUENTE' ? 'hot' : 'cold'}>
-                                  {item.category === 'QUENTE' ? 'Área Quente' : 'Área Fria'}
-                                </span>
+                                <span className={tone}>{group.label}</span>
                               </div>
                             </div>
                             <ChevronRight size={18} className="totem-sector-chevron" />

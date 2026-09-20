@@ -320,6 +320,9 @@ export function Dashboard({ auth }) {
               <Sparkles size={14} />
               <p>{data.analysis.summary}</p>
             </div>
+            {data.analysis.poweredByAI && (
+              <small className="ai-powered-badge">✨ Resumo gerado por IA (Groq)</small>
+            )}
           </article>
 
           <article className="card hr-card-prototype">

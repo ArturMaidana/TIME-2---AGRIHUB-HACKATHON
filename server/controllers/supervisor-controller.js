@@ -74,3 +74,19 @@ export async function patchPlanoAcao(request, response, { session, url }) {
   const result = await SupervisorAnalyticsService.atualizarPlanoAcao({ unidadeId: session.unitId, id, status: body.status });
   json(response, result.ok ? 200 : 422, result);
 }
+
+export async function getNotificacoes(_request, response, { session, url }) {
+  const status = url.searchParams.get('status');
+  const setorIds = scopedSectorIds(session, url);
+  const rows = await SupervisorAnalyticsService.notificacoes({ unidadeId: session.unitId, setorIds, status });
+  json(response, 200, { notificacoes: rows });
+}
+
+export async function patchNotificacao(request, response, { session, url }) {
+  const id = url.pathname.split('/').pop();
+  const body = await parseBody(request);
+  const result = await SupervisorAnalyticsService.atualizarNotificacao({
+    unidadeId: session.unitId, id, status: body.status, resposta: body.resposta,
+  });
+  json(response, result.ok ? 200 : 422, result);
+}
