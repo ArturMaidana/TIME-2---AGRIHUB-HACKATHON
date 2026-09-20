@@ -3391,7 +3391,7 @@ h1, h2, h3, .brand {
 }
 
 .shell-sidebar {
-  background: rgba(12, 27, 22, 0.96) !important;
+  background: var(--canvas-bg) !important;
   border: 0 !important;
   border-radius: 4px !important;
 }
