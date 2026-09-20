@@ -89,7 +89,11 @@ export function Dashboard({ auth }) {
 
   if (!data || !meta) return <div className="loading">Cruzando indicadores…</div>;
   const last = (metric) => Number(data.series.filter((row) => row.metric === metric).at(-1)?.average || 0);
-  const hr = data.hr[0] || {};
+  const hr = data.hr.reduce((total, item) => ({
+    absences: total.absences + Number(item.absences),
+    leaves: total.leaves + Number(item.leaves),
+    overtimeHours: total.overtimeHours + Number(item.overtime_hours || 0),
+  }), { absences: 0, leaves: 0, overtimeHours: 0 });
   const alertCount = analytics?.alertas?.length ?? 3;
 
   const sectorRows = analytics?.indices?.length
@@ -342,6 +346,10 @@ export function Dashboard({ auth }) {
               <div className="hr-stat-box">
                 <small>Afastamentos</small>
                 <strong>{hr.leaves || 0}</strong>
+              </div>
+              <div className="hr-stat-box">
+                <small>Horas Extras</small>
+                <strong>{hr.overtimeHours || 0}h</strong>
               </div>
             </div>
 
