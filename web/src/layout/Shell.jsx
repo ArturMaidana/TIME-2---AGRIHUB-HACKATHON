@@ -3,7 +3,6 @@ import {
   CalendarDays,
   ClipboardList,
   Factory,
-  Flower2,
   LayoutDashboard,
   LogOut,
   Maximize,
@@ -88,8 +87,8 @@ export function Shell({ auth, onLogout }) {
       {/* Barra superior exibida em telas verticais/mobile */}
       <div className="mobile-portrait-header">
         <div className="mobile-brand-group">
-          <div className="sidebar-brand-badge mini" title="AgriPulso">
-            <Flower2 size={18} strokeWidth={2.4} />
+          <div className="sidebar-brand-badge mini" title="AgriPulso" style={{ background: 'transparent', boxShadow: 'none' }}>
+            <img src="/LogoNova.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <strong>Agri<span>Pulso</span></strong>
         </div>
@@ -114,8 +113,9 @@ export function Shell({ auth, onLogout }) {
           title="AgriPulso - Início"
           role="button"
           tabIndex={0}
+          style={{ background: 'transparent', boxShadow: 'none' }}
         >
-          <Flower2 size={24} strokeWidth={2.4} />
+          <img src="/LogoNova.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
 
         {/* Grupo superior de blocos/tiles */}
