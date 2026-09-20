@@ -1392,7 +1392,7 @@ h1, h2, h3, .brand {
   align-items: flex-start;
   gap: 10px;
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: 4px;
   background: #142a21;
   border: 1px solid #263c33;
   color: #59c991;
@@ -1445,9 +1445,9 @@ h1, h2, h3, .brand {
 
 .hr-monthly-note {
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: 4px;
   background: #2d2117;
-  border: 1px solid #f2e9d2;
+  border: 1px solid #584326;
 }
 
 .hr-monthly-note .overline {
