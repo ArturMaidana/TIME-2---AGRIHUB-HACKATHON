@@ -25,6 +25,187 @@
   --shadow-lg: 0 10px 30px rgba(28, 35, 31, 0.08);
 }
 
+/* ==========================================================================
+   Dark Agro Theme — superfícies compactas e cantos discretos
+   ========================================================================== */
+:root {
+  color-scheme: dark;
+  color: #e8f0eb;
+  background-color: #07110e;
+  --canvas-bg: #07110e;
+  --card-bg: #0e1b17;
+  --card-border: #22362f;
+  --card-radius: 8px;
+  --forest: #163c31;
+  --forest-dark: #e8f0eb;
+  --green: #39a875;
+  --green-hover: #49bd86;
+  --lime: #a8d55f;
+  --paper: #0e1b17;
+  --line: #22362f;
+  --muted: #91a69d;
+  --muted-light: #71877e;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.32);
+}
+
+body,
+.shell-layout,
+.totem,
+.login {
+  background: #07110e;
+  color: #e8f0eb;
+}
+
+/* A identidade deixa de usar cápsulas e círculos como forma predominante. */
+:where(button, input, select, textarea, article, .card, .metric, .form-card,
+  .chart-card, .sector-report, .monthly-ai, .monthly-summary article,
+  .sidebar-tile, .sidebar-brand-badge, .brand > span, .filter-pill-btn,
+  .filter-pill-select, .alert-pill-btn, .filter-modal-box, .filter-option-card,
+  .filter-option-icon-box, .filter-modal-icon-badge, .filter-modal-close-btn,
+  .popover-tag, .sidebar-popover-menu, .popover-logout-btn, .score-pill,
+  .period-badge, .legend-tag, .mood-btn, .totem-section-box,
+  .totem-sector-card, .totem-sector-icon-box, .totem-sector-check,
+  .totem-confirm-btn, .totem-shift-pill, .totem-anon-notice,
+  .totem-fs-btn, .totem-logout-btn, .question-dot, .role-tabs,
+  .presence-team-card-unified, .collaborator-card-unified,
+  .other-sectors-card-unified, .other-sector-btn-card, .task-item-row,
+  .task-progress-box, .device-row, .correlation, .plan-item,
+  .hr-stat-box, .modal-avatar, .modal-close-btn, .modal-action-btn,
+  .presence-modal-box, .modal-info-box, .status-dot) {
+  border-radius: 7px !important;
+}
+
+:where(.filter-option-badge, .alert-badge-count, .collaborator-status-pill,
+  .modal-status-badge, .task-count, .presence-counter-badge, .ai-tag) {
+  border-radius: 4px !important;
+}
+
+:where(.card, .metric, .form-card, .chart-card, .sector-report,
+  .monthly-ai, .monthly-summary article, .sidebar-popover-menu,
+  .filter-modal-box, .totem-section-box, .presence-team-card-unified,
+  .collaborator-card-unified, .other-sectors-card-unified,
+  .task-progress-box, .presence-modal-box) {
+  background: #0e1b17 !important;
+  border-color: #22362f !important;
+  color: #e8f0eb;
+  box-shadow: var(--shadow-sm);
+}
+
+:where(.page-title-text h1, .card h2, .card h3, .metric-value,
+  .metric-label, .sector-report h2, .filter-modal-header h3,
+  .filter-option-text strong, .totem h1, .totem-section-header h3,
+  .totem-sector-info strong, .login-form h2, .login-art h1,
+  .monthly-summary strong, .plan-item strong, .popover-user-info strong,
+  .collaborator-name, .task-item-content strong, .device-row-info strong,
+  .modal-person-header h3, .modal-detail-item strong) {
+  color: #f1f7f3 !important;
+}
+
+:where(.page-title-text p, .card p, .card small, .metric-note,
+  .filter-modal-header p, .filter-option-text p, .totem-body > p,
+  .totem-vertical-header-title p, .login-form form > p,
+  .login-form form > small, .monthly-summary p, .monthly-summary small,
+  .popover-user-info small, .collaborator-role, .device-row-info small,
+  .modal-person-header p, .modal-detail-item small) {
+  color: #91a69d !important;
+}
+
+.mobile-portrait-header {
+  background: rgba(7, 17, 14, 0.94);
+  border-color: #22362f;
+}
+
+.sidebar-tile,
+.filter-pill-btn,
+.filter-pill-select,
+.filter-option-card,
+.filter-option-icon-box,
+.filter-modal-close-btn,
+.mood-btn,
+.totem-sector-card,
+.other-sector-btn-card,
+.device-row,
+.task-item-row {
+  background: #111f1a !important;
+  border-color: #293f36 !important;
+  color: #b8c9c1 !important;
+}
+
+:where(.sidebar-tile, .filter-pill-btn, .filter-option-card, .mood-btn,
+  .totem-sector-card, .other-sector-btn-card):hover {
+  background: #172a23 !important;
+  border-color: #3d6655 !important;
+  color: #f1f7f3 !important;
+}
+
+:where(.sidebar-tile.active, .filter-option-card.is-active,
+  .mood-btn.is-selected, .totem-sector-card.is-selected,
+  .other-sector-btn-card.is-active-sector, .role-tabs button.on) {
+  background: #163b2f !important;
+  border-color: #45b77f !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 1px rgba(69, 183, 127, 0.18);
+}
+
+.filter-modal-backdrop,
+.presence-modal-backdrop {
+  background: rgba(2, 8, 6, 0.8);
+}
+
+.filter-modal-header,
+.filter-modal-footer,
+.modal-footer {
+  border-color: #22362f !important;
+}
+
+.filter-pill-select select,
+.filter-pill-value,
+.mobile-brand-group,
+.brand,
+.login-form label,
+.rh label {
+  color: #e8f0eb !important;
+}
+
+:where(.login-form input, .rh input, .rh select, .plan-item select) {
+  background: #0a1512 !important;
+  border-color: #2b443a !important;
+  color: #f1f7f3 !important;
+}
+
+:where(.login-form input, .rh input, .rh select, .plan-item select):focus {
+  border-color: #45b77f !important;
+  box-shadow: 0 0 0 3px rgba(69, 183, 127, 0.14) !important;
+  outline: none;
+}
+
+.primary,
+.totem-confirm-btn,
+.filter-modal-btn-done {
+  background: #288b60 !important;
+  color: #ffffff !important;
+  border-color: #3aaa77 !important;
+}
+
+:where(.primary, .totem-confirm-btn, .filter-modal-btn-done):hover {
+  background: #35a873 !important;
+}
+
+.login-art,
+.login.mode-rh .login-art,
+.login.mode-supervisor .login-art,
+.login.mode-totem .login-art {
+  background: linear-gradient(145deg, #0c211a 0%, #12392c 58%, #1d543e 100%);
+}
+
+.chart-svg text,
+.axis-label {
+  fill: #91a69d !important;
+  color: #91a69d !important;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -3149,6 +3330,91 @@ h1, h2, h3, .brand {
   }
 }
 
+/* Mantém o tema escuro acima das regras legadas de cada componente. */
+:where(.card, .metric, .form-card, .chart-card, .sector-report, .monthly-ai,
+  .monthly-summary article, .sidebar-popover-menu, .filter-modal-box,
+  .totem-section-box, .presence-team-card-unified, .collaborator-card-unified,
+  .other-sectors-card-unified, .task-progress-box, .presence-modal-box,
+  .hr-stat-box, .modal-details-grid, .modal-info-box, .correlation, .plan-item) {
+  background: #0e1b17 !important;
+  border-color: #22362f !important;
+  color: #e8f0eb !important;
+}
+
+:where(.sidebar-tile, .filter-pill-btn, .filter-pill-select, .filter-option-card,
+  .filter-option-icon-box, .filter-modal-close-btn, .mood-btn,
+  .totem-sector-card, .other-sector-btn-card, .device-row, .task-item-row,
+  .role-tabs, .chart-type-toggle) {
+  background: #111f1a !important;
+  border-color: #293f36 !important;
+  color: #b8c9c1 !important;
+}
+
+:where(.page-title-text h1, .card h2, .card h3, .metric-value, .metric-label,
+  .sector-report h2, .filter-modal-header h3, .filter-option-text strong,
+  .totem h1, .totem-section-header h3, .totem-sector-info strong,
+  .login-form h2, .login-art h1, .monthly-summary strong, .plan-item strong,
+  .popover-user-info strong, .collaborator-name, .task-item-content strong,
+  .device-row-info strong, .modal-person-header h3, .modal-detail-item strong,
+  .filter-pill-value, .filter-pill-select select) {
+  color: #f1f7f3 !important;
+}
+
+:where(.page-title-text p, .card p, .card small, .metric-note,
+  .filter-modal-header p, .filter-option-text p, .totem-body > p,
+  .totem-vertical-header-title p, .login-form form > p,
+  .login-form form > small, .monthly-summary p, .monthly-summary small,
+  .popover-user-info small, .collaborator-role, .device-row-info small,
+  .modal-person-header p, .modal-detail-item small) {
+  color: #91a69d !important;
+}
+
+:where(.sidebar-tile.active, .filter-option-card.is-active, .mood-btn.is-selected,
+  .totem-sector-card.is-selected, .other-sector-btn-card.is-active-sector,
+  .role-tabs button.on, .chart-type-toggle button.active) {
+  background: #163b2f !important;
+  border-color: #45b77f !important;
+  color: #fff !important;
+}
+
+:where(.detail-icon-box, .metric-icon-box, .thanks-icon-box,
+  .totem-sector-icon-box, .filter-modal-icon-badge) {
+  background: #152a22 !important;
+  border-color: #2a493d !important;
+}
+
+.mobile-portrait-header,
+.totem-header,
+.totem footer {
+  background: rgba(8, 19, 15, 0.96) !important;
+  border-color: #22362f !important;
+}
+
+.shell-sidebar {
+  background: rgba(12, 27, 22, 0.96) !important;
+  border: 1px solid #294138 !important;
+  border-radius: 8px !important;
+}
+
+.chart-viewport,
+.chart-type-toggle,
+.legend-tag,
+.metric-badge {
+  background: #0a1512 !important;
+  border-color: #293f36 !important;
+  color: #c5d4cd !important;
+}
+
+.chart-type-toggle button.active {
+  background: #1b3c30 !important;
+  color: #fff !important;
+}
+
+.metric.highlight-hero {
+  background: linear-gradient(145deg, #166344 0%, #103f30 100%) !important;
+  border-color: #2d9668 !important;
+}
+
 @keyframes popoverUp {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -3626,5 +3892,3 @@ h1, h2, h3, .brand {
     grid-template-columns: 1fr;
   }
 }
-
-
