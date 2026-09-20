@@ -74,12 +74,12 @@ body,
   .task-progress-box, .device-row, .correlation, .plan-item,
   .hr-stat-box, .modal-avatar, .modal-close-btn, .modal-action-btn,
   .presence-modal-box, .modal-info-box, .status-dot) {
-  border-radius: 7px !important;
+  border-radius: 4px !important;
 }
 
 :where(.filter-option-badge, .alert-badge-count, .collaborator-status-pill,
   .modal-status-badge, .task-count, .presence-counter-badge, .ai-tag) {
-  border-radius: 4px !important;
+  border-radius: 3px !important;
 }
 
 :where(.card, .metric, .form-card, .chart-card, .sector-report,
@@ -3392,8 +3392,8 @@ h1, h2, h3, .brand {
 
 .shell-sidebar {
   background: rgba(12, 27, 22, 0.96) !important;
-  border: 1px solid #294138 !important;
-  border-radius: 8px !important;
+  border: 0 !important;
+  border-radius: 4px !important;
 }
 
 .chart-viewport,
@@ -3413,6 +3413,13 @@ h1, h2, h3, .brand {
 .metric.highlight-hero {
   background: linear-gradient(145deg, #166344 0%, #103f30 100%) !important;
   border-color: #2d9668 !important;
+}
+
+/* Geometria mais técnica: cantos discretos em todos os controles e superfícies. */
+:where(button, input, select, textarea, [class*="card"], [class*="badge"],
+  [class*="pill"], [class*="box"], [class*="modal"], [class*="tag"],
+  [class*="notice"], [class*="banner"], [class*="row"]) {
+  border-radius: 4px !important;
 }
 
 @keyframes popoverUp {

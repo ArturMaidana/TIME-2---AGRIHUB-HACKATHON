@@ -9,13 +9,11 @@ import {
   Minimize,
   Settings,
   User,
-  UserCheck,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Dashboard } from '../features/dashboard/Dashboard.jsx';
 import { MonthlyAnalysis } from '../features/dashboard/MonthlyAnalysis.jsx';
 import { SectorIndicators } from '../features/dashboard/SectorIndicators.jsx';
-import { SectorPresence } from '../features/presence/SectorPresence.jsx';
 import { RhPortal } from '../features/hr/RhPortal.jsx';
 
 export function Shell({ auth, onLogout }) {
@@ -71,8 +69,7 @@ export function Shell({ auth, onLogout }) {
   const content = page === 'rh' ? <RhPortal auth={auth} />
     : page === 'sectors' ? <SectorIndicators auth={auth} />
       : page === 'monthly' ? <MonthlyAnalysis auth={auth} />
-        : page === 'presence' ? <SectorPresence auth={auth} />
-          : <Dashboard auth={auth} />;
+        : <Dashboard auth={auth} />;
 
   return (
     <div className="shell-layout">
@@ -156,16 +153,6 @@ export function Shell({ auth, onLogout }) {
             <CalendarDays size={21} />
           </button>
 
-          {/* 4. Presença em Tempo Real / Ponto de Saída dos Frigoríficos */}
-          <button
-            type="button"
-            className={`sidebar-tile ${page === 'presence' ? 'active' : ''}`}
-            onClick={() => setPage('presence')}
-            title="Presença em Tempo Real (Ponto de Saída)"
-            aria-label="Presença no Setor"
-          >
-            <UserCheck size={21} />
-          </button>
         </div>
 
         {/* Divisor visual entre navegação e utilitários */}
