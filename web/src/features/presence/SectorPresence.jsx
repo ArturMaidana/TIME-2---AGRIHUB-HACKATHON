@@ -1,14 +1,21 @@
 import {
   ArrowUpRight,
+  Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Coffee,
   DoorOpen,
+  Factory,
+  Flame,
   Info,
   MapPin,
+  Package,
   Radio,
   ShieldCheck,
+  Snowflake,
   Timer,
+  Truck,
   User,
   Users,
   X,
@@ -78,6 +85,19 @@ export function SectorPresence({ auth }) {
   const [teamsBySector, setTeamsBySector] = useState({});
   const [currentTime, setCurrentTime] = useState('');
   const [selectedPerson, setSelectedPerson] = useState(null);
+  const [showSectorModal, setShowSectorModal] = useState(false);
+
+  // Fecha modais com a tecla Esc
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowSectorModal(false);
+        setSelectedPerson(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Carrega setores da API
   useEffect(() => {
@@ -136,17 +156,18 @@ export function SectorPresence({ auth }) {
             <span>Ao vivo {currentTime}</span>
             <ArrowUpRight size={14} />
           </div>
-          <div className="filter-pill-select">
-            <span>Setor:</span>
-            <select
-              value={activeSectorId}
-              onChange={(e) => setActiveSectorId(e.target.value)}
-            >
-              {sectors.map((s) => (
-                <option value={s.id} key={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
+
+          {/* Botão Interativo: Filtro de Setor */}
+          <button
+            type="button"
+            className="filter-pill-btn"
+            onClick={() => setShowSectorModal(true)}
+            title="Clique para selecionar o setor"
+          >
+            <span className="filter-pill-label">Setor:</span>
+            <span className="filter-pill-value">{activeSector.name}</span>
+            <ChevronDown size={14} className="filter-pill-chevron" />
+          </button>
         </div>
       </header>
 
@@ -409,6 +430,157 @@ export function SectorPresence({ auth }) {
                 Entendido
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL DE SELEÇÃO DE SETOR */}
+      {showSectorModal && (
+        <div
+          className="filter-modal-backdrop"
+          onClick={() => setShowSectorModal(false)}
+        >
+          <div
+            className="filter-modal-box"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <header className="filter-modal-header">
+              <div className="filter-modal-title-group">
+                <div className="filter-modal-icon-badge">
+                  <Factory size={22} />
+                </div>
+                <div>
+                  <h3>Selecionar Setor</h3>
+                  <p>Escolha o setor frigorífico para acompanhar a equipe e fluxo de saída em tempo real</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="filter-modal-close-btn"
+                onClick={() => setShowSectorModal(false)}
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </header>
+
+            <div className="filter-modal-body">
+              {/* Área Quente */}
+              {sectors.filter((s) => s.category === 'QUENTE').length > 0 && (
+                <>
+                  <div className="filter-modal-section-title">
+                    <Flame size={13} style={{ color: '#d96324' }} />
+                    <span>Área Quente (Processamento Inicial)</span>
+                  </div>
+                  <div className="filter-options-grid">
+                    {sectors
+                      .filter((s) => s.category === 'QUENTE')
+                      .map((sec) => {
+                        const isSelected = activeSectorId === sec.id;
+                        const team = teamsBySector[sec.id] || [];
+                        const pCount = team.filter((p) => p.present).length;
+                        const tCount = team.length;
+
+                        return (
+                          <div
+                            key={sec.id}
+                            className={`filter-option-card ${isSelected ? 'is-active' : ''}`}
+                            onClick={() => {
+                              setActiveSectorId(sec.id);
+                              setShowSectorModal(false);
+                            }}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            <div className="filter-option-main">
+                              <div className="filter-option-icon-box hot">
+                                <Flame size={20} />
+                              </div>
+                              <div className="filter-option-text">
+                                <strong>{sec.name}</strong>
+                                <p><b>{pCount}</b> de {tCount} colaboradores presentes</p>
+                              </div>
+                            </div>
+                            <div className="filter-option-right">
+                              <span className="filter-option-badge hot">Área Quente</span>
+                              <div className="filter-option-check">
+                                <Check size={14} strokeWidth={3} />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </>
+              )}
+
+              {/* Área Fria */}
+              {sectors.filter((s) => s.category === 'FRIA').length > 0 && (
+                <>
+                  <div className="filter-modal-section-title">
+                    <Snowflake size={13} style={{ color: '#2b7bc4' }} />
+                    <span>Área Fria (Climatizada NR-36 / Expedição)</span>
+                  </div>
+                  <div className="filter-options-grid">
+                    {sectors
+                      .filter((s) => s.category === 'FRIA')
+                      .map((sec) => {
+                        const isSelected = activeSectorId === sec.id;
+                        const team = teamsBySector[sec.id] || [];
+                        const pCount = team.filter((p) => p.present).length;
+                        const tCount = team.length;
+                        const lower = sec.name.toLowerCase();
+                        const SecIcon = lower.includes('embalagem') ? Package
+                          : (lower.includes('expedição') || lower.includes('expedicao')) ? Truck
+                          : Snowflake;
+
+                        return (
+                          <div
+                            key={sec.id}
+                            className={`filter-option-card ${isSelected ? 'is-active' : ''}`}
+                            onClick={() => {
+                              setActiveSectorId(sec.id);
+                              setShowSectorModal(false);
+                            }}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            <div className="filter-option-main">
+                              <div className="filter-option-icon-box cold">
+                                <SecIcon size={20} />
+                              </div>
+                              <div className="filter-option-text">
+                                <strong>{sec.name}</strong>
+                                <p><b>{pCount}</b> de {tCount} colaboradores presentes</p>
+                              </div>
+                            </div>
+                            <div className="filter-option-right">
+                              <span className="filter-option-badge cold">Área Fria</span>
+                              <div className="filter-option-check">
+                                <Check size={14} strokeWidth={3} />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <footer className="filter-modal-footer">
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                Setor selecionado: <b>{activeSector.name}</b>
+              </span>
+              <button
+                type="button"
+                className="filter-modal-btn-done"
+                onClick={() => setShowSectorModal(false)}
+              >
+                Concluir
+              </button>
+            </footer>
           </div>
         </div>
       )}
